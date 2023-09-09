@@ -25,6 +25,7 @@ PRO addsatmap
 
     ; FOR i=0, N_ELEMENTS(wave)-1 DO BEGIN
 
+    ;     rawdatafiles= FILE_SEARCH(badrawdir + wave[i] + '/*.sav')
     ;     satfiles    = FILE_SEARCH(satdir +  wave[i] + '/*.sav')
 
     ;     FOR j=0, N_ELEMENTS(rawdatafiles)-1 DO BEGIN
