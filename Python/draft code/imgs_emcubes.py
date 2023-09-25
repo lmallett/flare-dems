@@ -23,10 +23,10 @@ for i in range(len(filelist)):
     vars = sp.io.readsav(path + file, python_dict = False, verbose = False)
     # print(vars.keys())
 
-    a = np.sum(vars.emcube, axis = 0)**0.25
+    data = np.sum(vars.emcube, axis = 0)**0.25
     # np.info(a)
 
-    frame = ax.imshow(a, cmap = greenwhite)     # can also use matshow
+    frame = ax.imshow(data, cmap = greenwhite)     # can also use matshow
     text = ax.text(0.5,1.05,file, 
                     size = plt.rcParams["axes.titlesize"],
                     ha = "center",
@@ -34,7 +34,7 @@ for i in range(len(filelist)):
                     backgroundcolor = 'white')
     
     if i == 0:                          # show an initial one first
-        ax.imshow(a, cmap = greenwhite, interpolation = "nearest")
+        ax.imshow(data, cmap = greenwhite, interpolation = "nearest")
         ax.text(0.5,1.05,file, 
                     size = plt.rcParams["axes.titlesize"],
                     ha = "center",
@@ -63,3 +63,5 @@ plt.show()
 #                     backgroundcolor = 'white')
 #     return frame, text
 # ani = animation.FuncAnimation(fig, updatefig, interval = 50, blit = True)
+
+
