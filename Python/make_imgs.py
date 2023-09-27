@@ -6,12 +6,15 @@ import idl_colorbars
 import os
 import astropy.units as u
 import sunpy.visualization.colormaps.color_tables as aiacolormaps
+import types
 
 # Path to folder containing .sav files, which contain image data
 path = "E:\\2011_08_09\\emcubes\\all\\"
 
 greenwhite = idl_colorbars.getcmap(8)
 filelist = os.listdir(path)
+savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/"
+
 
 xregion = [0,500]
 yregion = [0,400]
@@ -45,11 +48,11 @@ def imgs_emcubes():
         filename = path + file
 
         print(file)
-        vars = sp.io.readsav(path + file, python_dict = False, verbose = False)
+        vars = sp.io.readsav(filename, python_dict = False, verbose = False)
         print(vars.keys())
         print(np.info(vars.datacube))
 
-        data = np.sum(vars.emcube, axis = 0)**0.25
+        data = (np.sum(vars.emcube, axis = 0)**0.25)
 
         frame = ax.imshow(data, cmap = greenwhite)     # can also use matshow
         text = ax.text(0.5,1.05,file, 
@@ -69,7 +72,7 @@ def imgs_emcubes():
         imglist.append([frame, text]) 
 
     ani = animation.ArtistAnimation(fig, imglist, interval = 50, blit = False, repeat_delay = 500)
-    ani.save("movie.mp4")
+    ani.save("emcubes.mp4")
     plt.show()
 
 
@@ -115,7 +118,7 @@ def imgs_datacubes(wavelength = allwaves):
         filename = path + file
 
         print(file)
-        vars = sp.io.readsav(path + file)#, python_dict = False, verbose = False)
+        vars = sp.io.readsav(filename)#, python_dict = False, verbose = False)
 
         data = np.copy(vars.datacube)
         data[data < 0] = 0
@@ -139,6 +142,7 @@ def imgs_datacubes(wavelength = allwaves):
                             ha = "center",
                             transform = ax.transAxes,
                             backgroundcolor = 'white')
+            plt.axis('off')
             
             if i == 0:                          # show an initial one first
                 ax.imshow(data, cmap = colors, interpolation = "nearest")
@@ -147,15 +151,16 @@ def imgs_datacubes(wavelength = allwaves):
                             ha = "center",
                             transform = ax.transAxes,
                             backgroundcolor = 'white')
-                
+                plt.axis('off')
             movie.append([frame, text]) 
 
         ani = animation.ArtistAnimation(fig, movie, interval = 50, blit = False, repeat_delay = 500)
-        ani.save("/movies/datacubes" + str(allwaves[e]) + ".mp4")
-        plt.show()
+        ani.save(savedir + "/datacubes_" + str(allwaves[e]) + ".mp4")
+        # plt.show()
+        # plt.close()
 
 
-def contoured_data():
+def contoured_data(wavelength = allwaves):
 
     if type(wavelength) != list:
         wavelength = [wavelength]
@@ -163,18 +168,21 @@ def contoured_data():
     fig, ax = plt.subplots()
 
     imglist = []
+    satimglist = []
+
     for i in range(len(filelist)):
 
         file = filelist[i]
         filename = path + file
 
         print(file)
-        vars = sp.io.readsav(path + file)#, python_dict = False, verbose = False)
+        vars = sp.io.readsav(filename)#, python_dict = False, verbose = False)
 
         data = np.copy(vars.datacube)
         data[data < 0] = 0
         data = data**0.25
 
+        satimglist.append(vars.satmap)
         imglist.append(data)
 
     indices = [allwaves.index(wave) for wave in wavelength] # maps what wavelength we want to 0-5
@@ -185,15 +193,8 @@ def contoured_data():
         for i in range(len(filelist)):            
 
             file = filelist[i]
-            data = (imglist[i])[e,:,:]          # get data at timestamp, for only the relevant channel
+            data = (imglist[i])[e,:,:]                  # get data at timestamp, for only the relevant channel
 
-            frame = ax.imshow(data, cmap = colors)     # can also use matshow, default = greenwhite
-            text = ax.text(0.5,1.05,file, 
-                            size = plt.rcParams["axes.titlesize"],
-                            ha = "center",
-                            transform = ax.transAxes,
-                            backgroundcolor = 'white')
-            
             if i == 0:                          # show an initial one first
                 ax.imshow(data, cmap = colors, interpolation = "nearest")
                 ax.text(0.5,1.05,file, 
@@ -201,9 +202,19 @@ def contoured_data():
                             ha = "center",
                             transform = ax.transAxes,
                             backgroundcolor = 'white')
-                
-            movie.append([frame, text]) 
+                ax.contour((satimglist[i])[e,:,:])
+
+            frame = ax.imshow(data, cmap = colors)      # can also use matshow, default = greenwhite
+            text = ax.text(0.5,1.05,file, 
+                            size = plt.rcParams["axes.titlesize"],
+                            ha = "center",
+                            transform = ax.transAxes,
+                            backgroundcolor = 'white')
+            contour = plt.contour((satimglist[i])[e,:,:], colors = 'black', linewidths = 0.1)
+        
+            movie.append(contour.collections + [frame, text]) 
+
 
         ani = animation.ArtistAnimation(fig, movie, interval = 50, blit = False, repeat_delay = 500)
-        ani.save("/movies/datacubes" + str(allwaves[e]) + ".mp4")
+        ani.save(savedir + "datacubes_contoured_" + str(allwaves[e]) + ".mp4")
         plt.show()
