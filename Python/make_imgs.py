@@ -15,7 +15,6 @@ greenwhite = idl_colorbars.getcmap(8)
 filelist = os.listdir(path)
 savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/"
 
-
 xregion = [0,500]
 yregion = [0,400]
 
@@ -24,19 +23,18 @@ xend    = xregion[1]-1
 ystart  = yregion[0]
 yend    = yregion[1]-1
 
-
 allwaves  = [94,131,171,193,211,335]
 
 def imgs_emcubes():
-    """Produces movies of the event, where data is the sum of the emission cubes.
+
+    """Produces movies of the event, where the data plotted is the sum of the emission cubes over logT.
 
     Args:
         None.
         
     Returns:
         None.
-        Produces a video "datacubes[wavelength].mp4" in the same file folder that is a video of the event,
-        in each wavelength specified.
+        Produces a video "emcubes.mp4" in savedir.
     """
 
     fig, ax = plt.subplots()
@@ -47,10 +45,7 @@ def imgs_emcubes():
         file = filelist[i]
         filename = path + file
 
-        print(file)
         vars = sp.io.readsav(filename, python_dict = False, verbose = False)
-        print(vars.keys())
-        print(np.info(vars.datacube))
 
         data = (np.sum(vars.emcube, axis = 0)**0.25)
 
@@ -72,7 +67,7 @@ def imgs_emcubes():
         imglist.append([frame, text]) 
 
     ani = animation.ArtistAnimation(fig, imglist, interval = 50, blit = False, repeat_delay = 500)
-    ani.save("emcubes.mp4")
+    ani.save(savedir + "/emcubes.mp4")
     plt.show()
 
 
@@ -95,6 +90,7 @@ def imgs_emcubes():
 
 
 def imgs_datacubes(wavelength = allwaves):
+
     """Produces movies of the event in the specified AIA wavelength (94, 131, 171, 193, 211, or 335).
 
     Args:
@@ -195,14 +191,17 @@ def contoured_data(wavelength = allwaves):
             file = filelist[i]
             data = (imglist[i])[e,:,:]                  # get data at timestamp, for only the relevant channel
 
-            if i == 0:                          # show an initial one first
-                ax.imshow(data, cmap = colors, interpolation = "nearest")
-                ax.text(0.5,1.05,file, 
-                            size = plt.rcParams["axes.titlesize"],
-                            ha = "center",
-                            transform = ax.transAxes,
-                            backgroundcolor = 'white')
-                ax.contour((satimglist[i])[e,:,:])
+        # This part of the code is supposed to show an initial frame.
+        # I have no idea why, but it refuses to clear the contour on subsequent frames.
+        # It doesn't affect the movie, just the visual plot when it shows you the result. :/
+            # if i == 0:                          # show an initial one first
+            #     ax.imshow(data, cmap = colors, interpolation = "nearest")
+            #     ax.text(0.5,1.05,file, 
+            #                 size = plt.rcParams["axes.titlesize"],
+            #                 ha = "center",
+            #                 transform = ax.transAxes,
+            #                 backgroundcolor = 'white')
+            #     ax.contour((satimglist[i])[e,:,:])
 
             frame = ax.imshow(data, cmap = colors)      # can also use matshow, default = greenwhite
             text = ax.text(0.5,1.05,file, 
@@ -218,3 +217,61 @@ def contoured_data(wavelength = allwaves):
         ani = animation.ArtistAnimation(fig, movie, interval = 50, blit = False, repeat_delay = 500)
         ani.save(savedir + "datacubes_contoured_" + str(allwaves[e]) + ".mp4")
         plt.show()
+
+
+def contoured_emcubes():
+
+    fig, ax = plt.subplots()
+
+    imglist = []
+    satimglist = []
+
+    for i in range(len(filelist)):
+
+        file = filelist[i]
+        filename = path + file
+
+        print(file)
+        vars = sp.io.readsav(filename)#, python_dict = False, verbose = False)
+
+        sat = np.copy(vars.satmap)
+        sat = np.sum(sat, 0)
+        data = (np.sum(vars.emcube, axis = 0)**0.25)
+
+        satimglist.append(sat)
+        imglist.append(data)
+
+    movie = []
+
+    for i in range(len(filelist)):            
+        file = filelist[i]
+        data = imglist[i]
+
+        # This part of the code is supposed to show an initial frame.
+        # I have no idea why, but it refuses to clear the contour on subsequent frames.
+        # It doesn't affect the movie, just the visual plot when it shows you the result. :/
+
+        # if i == 0:                          # show an initial one first
+        #     ax.imshow(data, cmap = 'gray', interpolation = "nearest")
+        #     ax.text(0.5,1.05,file, 
+        #                 size = plt.rcParams["axes.titlesize"],
+        #                 ha = "center",
+        #                 transform = ax.transAxes,
+        #                 backgroundcolor = 'white')
+        #     ax.contour(satimglist[i], colors = 'pink', linewidths = 1)
+
+        frame = ax.imshow(data, cmap = 'gray', interpolation="nearest")      # can also use matshow, default = greenwhite
+        text = ax.text(0.5,1.05,file, 
+                    size = plt.rcParams["axes.titlesize"],
+                    ha = "center",
+                    transform = ax.transAxes,
+                    backgroundcolor = 'white')
+
+        contour = ax.contour(satimglist[i], colors = 'pink', linewidths = 1)
+    
+        movie.append(contour.collections + [frame, text]) 
+
+
+    ani = animation.ArtistAnimation(fig, movie, interval = 50, blit = False, repeat_delay = 500)
+    ani.save(savedir + "emcubes_contoured.mp4")
+    plt.show()
