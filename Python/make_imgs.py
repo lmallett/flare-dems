@@ -139,7 +139,7 @@ def imgs_datacubes(wavelength = allwaves):
                             transform = ax.transAxes,
                             backgroundcolor = 'white')
             plt.axis('off')
-            
+
             if i == 0:                          # show an initial one first
                 ax.imshow(data, cmap = colors, interpolation = "nearest")
                 ax.text(0.5,1.05,file, 
