@@ -57,6 +57,10 @@ yend    = yregion[1]-1
 
 allwaves  = [94,131,171,193,211,335]
 
+######################################################################
+######################################################################
+######################################################################
+######################################################################
 
 def imgs_emcubes():
     """Produces frames for a movie of the event, where the data plotted is the sum of the emission cubes over logT.
@@ -67,7 +71,7 @@ def imgs_emcubes():
         Saves a series of images into the directory savedir/emcubes/.
     """
 
-    for i in range(len(filelist)):
+    for i in range(1):#len(filelist)):
 
         # read in data & modify it
         file = filelist[i]
@@ -83,6 +87,11 @@ def imgs_emcubes():
         plt.imsave(savedir + dirs["emcube"] + file[:-4] + ".png", data, cmap = greenwhite,  origin='lower')
 
     plt.close()
+
+######################################################################
+######################################################################
+######################################################################
+######################################################################
 
 def imgs_datacubes(wavelength = allwaves):
     """Produces frames for a movie of the event in the specified AIA wavelength (94, 131, 171, 193, 211, or 335).
@@ -131,6 +140,10 @@ def imgs_datacubes(wavelength = allwaves):
 
     plt.close()
 
+######################################################################
+######################################################################
+######################################################################
+######################################################################
 
 def contoured_data(wavelength = allwaves):
     """Produces frames for a movie of the event in the specified AIA wavelength (94, 131, 171, 193, 211, or 335), where saturated pixels are contoured over the data.
@@ -198,6 +211,10 @@ def contoured_data(wavelength = allwaves):
             # plt.savefig(savedir + "contoured_" + dirs[allwaves[e]] + file[:-4] + ".png", bbox_inches='tight', pad_inches=0)
             # plt.clf()
 
+######################################################################
+######################################################################
+######################################################################
+######################################################################
 
 def contoured_emcubes():
     """Produces frames for a movie of the event, where the data plotted is the sum of the emission cubes over logT, with saturated pixels contoured on it.
@@ -282,3 +299,10 @@ def contoured_emcubes():
 
         # ax.imshow(data, interpolation='none')
         # fig.savefig(savedir + "contoured_" + dirs["emcube"] + file[:-4] + ".png", dpi = 1)
+
+
+
+######################################################################
+######################################################################
+######################################################################
+######################################################################
