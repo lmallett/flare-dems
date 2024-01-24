@@ -30,12 +30,15 @@ import astropy.units as u
 import sunpy.visualization.colormaps.color_tables as aiacolormaps
 
 # Path to folder containing .sav files, which contain image data
-path = "E:\\2011_08_09\\emcubes\\all\\"
+# path = "E:\\2011_08_09\\emcubes\\all\\"
+path = "E:\\2014_09_10\\emcubes\\all\\"
+
 
 greenwhite = idl_colorbars.getcmap(8)
 contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
 filelist = os.listdir(path)
-savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/"
+# savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2011/"
+savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2014/"
 
 # directories to put individual frames in
 dirs = {
@@ -71,7 +74,7 @@ def imgs_emcubes():
         Saves a series of images into the directory savedir/emcubes/.
     """
 
-    for i in range(1):#len(filelist)):
+    for i in range(len(filelist)):
 
         # read in data & modify it
         file = filelist[i]
@@ -262,7 +265,7 @@ def contoured_emcubes():
         ax.set_axis_off()
         fig.add_axes(ax)
 
-        ax.imshow(data, cmap = greenwhite, interpolation='none', origin='lower')
+        ax.imshow(data, cmap = 'gray', interpolation='none', origin='lower')
         ax.contour(satimglist[i], levels = [1,3,5], colors = contourclrs, antialiased = False)#linewidths = 100)
         fig.savefig(savedir + "contoured_" + dirs["emcube"] + file[:-4] + ".png", dpi = 1)
 
