@@ -19,9 +19,8 @@ import sunpy.io.special.genx
 
 # Path to folder containing .sav files, which contain image data
 
-path = "E:\\2011_08_09\\emcubes\\all\\"
+# path = "E:\\2011_08_09\\emcubes\\all\\"
 path = "E:\\2014_09_10\\emcubes\\all\\"
-
 
 greenwhite = idl_colorbars.getcmap(8)
 contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
@@ -233,6 +232,43 @@ def lociplots(x, y):
         plt.savefig(fname = savedir + "lociplots_140-250/" + file[:-4] + ".png")
         # fig.show()
 
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+
+def contains_time(time, filename):
+    if time in filename:
+        return True
+    else:
+        return False
+
+def lociplots_randompoints(time1, time2, time3):
+        
+        file1 = filelist[time1]
+        file2 = filelist[time2]
+        file3 = filelist[time3]
+        print(file1, file2, file3)
+
+        vars = sp.io.readsav(path + file1)
+        datacube1 = np.copy(vars.datacube)
+        emcubesum = np.copy(vars.emcube)
+
+        vars = sp.io.readsav(path + file2)
+        datacube2 = np.copy(vars.datacube)
+        emcubesum += np.copy(vars.emcube)
+
+        vars = sp.io.readsav(path + file3)
+        datacube3 = np.copy(vars.datacube)
+        emcubesum += np.copy(vars.emcube)
+
+        emcubesum = np.sum(emcubesum, axis = 0)
+        emcubesum[emcubesum > 0] = 100
+        fig, axs = plt.subplots()
+
+        axs.imshow(emcubesum, origin = 'lower', cmap = 'binary')
+
+        plt.show()
 ######################################################################
 ######################################################################
 ######################################################################
