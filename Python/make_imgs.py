@@ -30,15 +30,15 @@ import astropy.units as u
 import sunpy.visualization.colormaps.color_tables as aiacolormaps
 
 # Path to folder containing .sav files, which contain image data
-# path = "E:\\2011_08_09\\emcubes\\all\\"
-path = "E:\\2014_09_10\\emcubes\\all\\"
+path = "E:\\2011_08_09\\emcubes\\all\\"
+# path = "E:\\2014_09_10\\emcubes\\all\\"
 
 
 greenwhite = idl_colorbars.getcmap(8)
 contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
 filelist = os.listdir(path)
-# savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2011/"
-savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2014/"
+savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2011/"
+# savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2014/"
 
 # directories to put individual frames in
 dirs = {
@@ -120,7 +120,7 @@ def imgs_datacubes(wavelength = allwaves):
 
         data = np.copy(vars.datacube)
         data[data < 0] = 0
-        data = data**0.25
+        # data = data**0.25
 
         # save modifed datacubes
         imglist.append(data)
@@ -307,3 +307,61 @@ def contoured_emcubes():
 ######################################################################
 ######################################################################
 ######################################################################
+
+def contoured_data_test(wavelength = allwaves):
+    """Produces frames for a movie of the event in the specified AIA wavelength (94, 131, 171, 193, 211, or 335), where saturated pixels are contoured over the data.
+    Args:
+        (Optional) An integer, or list of integers, that is a subset of [94,131,171,193,211,335].
+    Returns:
+        None.
+        Saves a series of images into the directory savedir/contoured_data_[wave]/ with contours over saturated pixels.
+    """
+    if type(wavelength) != list:
+        wavelength = [wavelength]
+
+    imglist = []
+    satimglist = []
+
+    for i in range(len(filelist)):
+
+        # read in data & modify it
+        file = filelist[i]
+        filename = path + file
+
+        print(file)
+        vars = sp.io.readsav(filename)
+
+        data = np.copy(vars.datacube)
+        data[data < 16000] = 0
+
+        # save modifed datacubes & satmaps
+        satimglist.append(vars.satmap)
+        imglist.append(data)
+
+    # maps what wavelength we want to 0-5
+    # convenient for accessing datacubes
+    indices = [allwaves.index(wave) for wave in wavelength]
+
+    for e in indices:
+
+        colors = aiacolormaps.aia_color_table(allwaves[e] * u.Angstrom)
+
+        for i in range(len(filelist)):          
+
+            # get data at timestamp, for only the relevant channel
+            file = filelist[i]
+            data = (imglist[i])[e,:,:]
+            sat = (satimglist[i])[e,:,:]
+
+            fig = plt.figure(frameon = False)
+            fig.set_size_inches(data.shape[1], data.shape[0])
+            ax = plt.Axes(fig, [0., 0., 1., 1.])
+            ax.set_axis_off()
+            fig.add_axes(ax)
+
+            ax.imshow(data, cmap = colors, interpolation='none', origin='lower')
+            ax.contour(sat, levels = 1, colors = contourclrs[0], antialiased = False)
+            fig.savefig(savedir + "contoured_" + dirs[allwaves[e]] + file[:-4] + ".png", dpi = 1)
+
+            fig.clf()
+    plt.close()

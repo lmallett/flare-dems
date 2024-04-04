@@ -7,6 +7,10 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
+from astropy.time import Time
+from astropy.timeseries import TimeSeries
+from astropy import visualization
+
 plt.rcParams['text.usetex'] = True
 
 import idl_colorbars
@@ -18,9 +22,8 @@ import sunkit_image.trace as trace
 import sunpy.io.special.genx
 
 # Path to folder containing .sav files, which contain image data
-
-# path = "E:\\2011_08_09\\emcubes\\all\\"
-path = "E:\\2014_09_10\\emcubes\\all\\"
+path = "E:\\2011_08_09\\emcubes\\all\\"
+# path = "E:\\2014_09_10\\emcubes\\all\\"
 
 greenwhite = idl_colorbars.getcmap(8)
 contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
@@ -366,4 +369,138 @@ def temp_responses():
         axs.semilogy(logte, respj, color = linecolors[j], label = allwaves[j])
     
     axs.legend()
+    plt.show()
+
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+    
+def exptimes(wavelength = allwaves):
+
+    if type(wavelength) != list:
+        wavelength = [wavelength]
+
+    n = len(filelist)
+
+    exptimes = np.zeros([n, 6])
+    times = []
+
+    for i in range(n):
+
+        # read in data & modify it
+        file = filelist[i]
+        filename = path + file
+
+        time = file[11:-4].replace("_",":")
+        times.append(time)
+
+        vars = sp.io.readsav(filename)#, python_dict = False, verbose = False)
+        exptimes[i] = np.copy(vars.exptimeout)
+
+    ts = TimeSeries(time = times)
+    ts['times_94'] = exptimes[:,0]
+    ts['times_131'] = exptimes[:,1]
+    ts['times_171'] = exptimes[:,2]
+    ts['times_193'] = exptimes[:,3]
+    ts['times_211'] = exptimes[:,4]
+    ts['times_335'] = exptimes[:,5]
+
+    print(ts)
+
+    print(ts.time.format)
+    fig, ax = plt.subplots()
+
+    with visualization.time_support(format = 'isot', simplify=True):  
+
+        ax.plot(ts.time, ts['times_94'])
+        ax.plot(ts.time, ts['times_131'])
+        ax.plot(ts.time, ts['times_171'])
+        ax.plot(ts.time, ts['times_193'])
+        ax.plot(ts.time, ts['times_211'])
+        ax.plot(ts.time, ts['times_335'])
+
+        # ax.xlabel('Julian Date')
+        # ax.ylabel('SAP Flux (e-/s)')
+        ax.grid()
+    
+    plt.show()
+
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+
+def num_sat():
+
+    n = len(filelist)
+
+    numSat = np.zeros([n, 6])
+    norms = np.zeros([n, 6])
+
+    times = []
+
+    for i in range(n):
+
+        # read in data & modify it
+        file = filelist[i]
+        filename = path + file
+
+        time = file[11:-4].replace("_",":")
+        times.append(time)
+
+        vars = sp.io.readsav(filename)#, python_dict = False, verbose = False)
+        sums = np.sum(vars.satmap, axis = (1,2))
+
+        numSat[i] = sums
+        try:
+            norms[i] = sums / np.linalg.norm(sums)
+        except: 
+            norms[i] = sums
+
+        print(sums)
+
+    ts = TimeSeries(time = times)
+    ts['times_94'] = numSat[:,0]
+    ts['times_131'] = numSat[:,1]
+    ts['times_171'] = numSat[:,2]
+    ts['times_193'] = numSat[:,3]
+    ts['times_211'] = numSat[:,4]
+    ts['times_335'] = numSat[:,5]
+
+    print(ts)
+
+    print(ts.time.format)
+    fig, ax = plt.subplots()
+
+    # ts['norm_94'] = norms[:,0]
+    # ts['norm_131'] = norms[:,1]
+    # ts['norm_171'] = norms[:,2]
+    # ts['norm_193'] = norms[:,3]
+    # ts['norm_211'] = norms[:,4]
+    # ts['norm_335'] = norms[:,5]
+    # with visualization.time_support(format = 'isot', simplify=True):  
+
+    #     ax.plot(ts.time, ts['norm_94'], label = "94")
+    #     ax.plot(ts.time, ts['norm_131'], label = "131")
+    #     ax.plot(ts.time, ts['norm_171'], label = "171")
+    #     ax.plot(ts.time, ts['norm_193'], label = "193")
+    #     ax.plot(ts.time, ts['norm_211'], label = "211")
+    #     ax.plot(ts.time, ts['norm_335'], label = "335")
+
+    #     ax.grid()
+    #     ax.legend()
+    
+    
+    with visualization.time_support(format = 'isot', simplify=True):  
+
+        ax.plot(ts.time, ts['times_94'], label = "94", linestyle = 'dashed', c = 'r')
+        ax.plot(ts.time, ts['times_131'], label = "131", c = 'y')
+        ax.plot(ts.time, ts['times_171'], label = "171", linestyle = 'dashed', c = 'g')
+        ax.plot(ts.time, ts['times_193'], label = "193", c = 'c')
+        ax.plot(ts.time, ts['times_211'], label = "211", linestyle = 'dashed', c = 'm')
+        ax.plot(ts.time, ts['times_335'], label = "335", c = 'k')
+        ax.grid()
+        ax.legend()
+
     plt.show()
