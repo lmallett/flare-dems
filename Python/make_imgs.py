@@ -30,15 +30,27 @@ import astropy.units as u
 import sunpy.visualization.colormaps.color_tables as aiacolormaps
 
 # Path to folder containing .sav files, which contain image data
-path = "E:\\2011_08_09\\emcubes\\all\\"
+
+# path = "E:\\2011_08_09\\emcubes\\all\\"
 # path = "E:\\2014_09_10\\emcubes\\all\\"
 
+# path = "E:\\emcubes_110809\\"
+# xregion = [0,500]
+# yregion = [0,400]
+# xregion = [250,750]
+# yregion = [350,750]
+
+# path = "E:\\emcubes_140910\\"
+# xregion = [0,500]
+# yregion = [0,400]
+# xregion = [350,650]
+# yregion = [275,775]
 
 greenwhite = idl_colorbars.getcmap(8)
 contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
 filelist = os.listdir(path)
-savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2011/"
-# savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2014/"
+# savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2011/"
+savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2014/"
 
 # directories to put individual frames in
 dirs = {
@@ -50,15 +62,15 @@ dirs = {
     335: "data_335/",
     "emcube": "emcubes/"}
 
-xregion = [0,500]
-yregion = [0,400]
-
 xstart  = xregion[0]
 xend    = xregion[1]-1
 ystart  = yregion[0]
 yend    = yregion[1]-1
 
 allwaves  = [94,131,171,193,211,335]
+
+
+
 
 ######################################################################
 ######################################################################
@@ -85,9 +97,9 @@ def imgs_emcubes():
         data = (np.sum(vars.emcube, axis = 0)**0.25)
 
         # plot data
-        plt.imshow(data, cmap = greenwhite, origin='lower')
+        plt.imshow(data, cmap = 'binary_r', origin='lower')
         plt.axis('off')
-        plt.imsave(savedir + dirs["emcube"] + file[:-4] + ".png", data, cmap = greenwhite,  origin='lower')
+        plt.imsave(savedir + dirs["emcube"] + file[:-4] + ".png", data, cmap = 'binary_r',  origin='lower')
 
     plt.close()
 
@@ -240,11 +252,15 @@ def contoured_emcubes():
         print(file)
         vars = sp.io.readsav(filename)
 
+        # sat = np.copy(vars.satmap[:,xstart:xend, ystart:yend])
         sat = np.copy(vars.satmap)
+
         sat = np.sum(sat, 0)
         sat = sat.astype('int32')
 
+        # data = (np.sum(vars.emcube[:,xstart:xend, ystart:yend], axis = 0)**0.25)
         data = (np.sum(vars.emcube, axis = 0)**0.25)
+
         print(data.shape)
 
         # save modifed datacubes & satmaps
@@ -266,6 +282,8 @@ def contoured_emcubes():
         fig.add_axes(ax)
 
         ax.imshow(data, cmap = 'gray', interpolation='none', origin='lower')
+
+        print(satimglist[i].shape)
         ax.contour(satimglist[i], levels = [1,3,5], colors = contourclrs, antialiased = False)#linewidths = 100)
         fig.savefig(savedir + "contoured_" + dirs["emcube"] + file[:-4] + ".png", dpi = 1)
 
@@ -286,7 +304,7 @@ def contoured_emcubes():
         # plt.show()
 
         # # Without contours
-        # x = plt.imshow(data, cmap = greenwhite, interpolation='none')
+        # x = plt.imshow(data, cmap = 'binary_r', interpolation='none')
         # print(type(x))
         # plt.axis('off')
         # plt.savefig(savedir + "contoured_" + dirs["emcube"] + file[:-4] + ".png", format='png', bbox_inches='tight', pad_inches=0)
@@ -331,11 +349,11 @@ def contoured_data_test(wavelength = allwaves):
         print(file)
         vars = sp.io.readsav(filename)
 
-        data = np.copy(vars.datacube)
+        data = np.copy(vars.datacube[:,xstart:xend, ystart:yend])
         data[data < 16000] = 0
 
         # save modifed datacubes & satmaps
-        satimglist.append(vars.satmap)
+        satimglist.append(vars.satmap[:,xstart:xend, ystart:yend])
         imglist.append(data)
 
     # maps what wavelength we want to 0-5
@@ -360,7 +378,7 @@ def contoured_data_test(wavelength = allwaves):
             fig.add_axes(ax)
 
             ax.imshow(data, cmap = colors, interpolation='none', origin='lower')
-            ax.contour(sat, levels = 1, colors = contourclrs[0], antialiased = False)
+            ax.contour(sat, levels = 1, colors = contourclrs[0], antialiased = True, linewidth = 0.0001)
             fig.savefig(savedir + "contoured_" + dirs[allwaves[e]] + file[:-4] + ".png", dpi = 1)
 
             fig.clf()

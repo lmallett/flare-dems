@@ -24,11 +24,14 @@ import sunpy.io.special.genx
 # Path to folder containing .sav files, which contain image data
 path = "E:\\2011_08_09\\emcubes\\all\\"
 # path = "E:\\2014_09_10\\emcubes\\all\\"
+# path = "E:\\emcubes_110809\\uncropped\\"
+# path = "E:\\emcubes_140910\\uncropped\\"
+
 
 greenwhite = idl_colorbars.getcmap(8)
 contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
 filelist = os.listdir(path)
-savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/"
+savedir = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//"
 
 # directories to put individual frames in
 dirs = {
@@ -38,7 +41,7 @@ dirs = {
     193: "data_193/",
     211: "data_211/",
     335: "data_335/",
-    "emcube": "emcubes/"}
+    "emcube": "emcubes//"}
 
 xregion = [0,500]
 yregion = [0,400]
@@ -49,6 +52,12 @@ ystart  = yregion[0]
 yend    = yregion[1]-1
 
 allwaves  = [94,131,171,193,211,335]
+
+xregion = [350,650]
+yregion = [275,775]
+
+# xregion = [250,750]
+# yregion = [350,750] 
 
 ######################################################################
 ######################################################################
@@ -195,12 +204,15 @@ def lociplots(x, y):
         print(emcube.shape)
         print(datacube.shape)
 
-        # show image with + on pixel
-        axs[1].imshow(np.sum(emcube, axis = 0)**0.25, origin = 'lower', cmap = greenwhite)
-        axs[1].scatter(x,y, c = 'aqua', marker = '+')
+        # show image with line on pixel
+        axs[1].imshow(np.sum(emcube, axis = 0)**0.25, origin = 'lower', cmap = 'binary_r')
+        # axs[1].scatter(x,y, c = 'aqua', marker = '+')
+
+        axs[1].axhline(y, color="r", linestyle="--")
+        axs[1].axvline(x, color="r", linestyle="--")
 
         # IDL is col-major, so the data is unfortunately stored as [temp, y, x]
-        axs[0].step(logt, emcube[:,y,x], where = 'post', color = 'k', label = 'EM')
+        axs[0].step(logt, emcube[:,y,x], where = 'post', color = 'w', label = 'EM')
 
         axs[0].tick_params(axis='both', which = 'both',
                            direction = 'in',
@@ -232,7 +244,10 @@ def lociplots(x, y):
         # plot emission cube
         axs[0].legend(loc = 'upper left')
         plt.pause(0.001)
-        plt.savefig(fname = savedir + "lociplots_140-250/" + file[:-4] + ".png")
+        
+        plt.style.use("dark_background")
+        plt.savefig(fname = savedir + "lociplots_144-214//" + file[:-4] + ".png", transparent = True)
+        # plt.savefig(fname = savedir + "lociplots_153-214//" + file[:-4] + ".png", transparent = True)
         # fig.show()
 
 ######################################################################
@@ -369,7 +384,8 @@ def temp_responses():
         axs.semilogy(logte, respj, color = linecolors[j], label = allwaves[j])
     
     axs.legend()
-    plt.show()
+    plt.style.use("dark_background")
+    plt.savefig(fname = "C:\\Users\\Lucien\\Documents\\School\\Research - Thesis\\response.png", transparent = True)
 
 ######################################################################
 ######################################################################
@@ -504,3 +520,62 @@ def num_sat():
         ax.legend()
 
     plt.show()
+
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+
+def lociplots_only(x, y):
+
+    # # load in response functions as 20x1 arrays
+    respinfo = sp.io.readsav("aia_response_2011.sav", python_dict = False, verbose = False)
+
+    logt = respinfo['logt']
+    # logt = np.linspace(0,1, num = 25)
+    print(logt.shape)
+
+    fig, axs = plt.subplots()
+    fig.set_size_inches(6, 3)
+    fig.tight_layout()
+    plt.subplots_adjust(left = 0.1)
+
+    print(logt)
+    for i in range(len(filelist)):
+
+        axs.clear()
+
+        # read in data & modify it
+        file = filelist[i]
+        filename = path + file
+
+        print(file)
+
+        vars = sp.io.readsav(filename)
+        datacube = np.copy(vars.datacube)
+        emcube = np.copy(vars.emcube)
+
+        # IDL is col-major, so the data is unfortunately stored as [temp, y, x]
+        axs.step(logt, emcube[:,y,x], where = 'post', color = 'k', label = 'EM')
+
+        axs.tick_params(axis='both', which = 'both',
+                           direction = 'in',
+                           bottom = True, top= True, left= True, right = True)
+        axs.tick_params(which = 'major', length = 10)
+        axs.tick_params(which = 'minor', length = 5)
+
+        axs.set_xlim(5.6, 7.5)
+        axs.set_xlim(5.6, 8)
+        axs.set_ylim(1, 10**4)
+        axs.set_xlabel("$log(T)$")
+        axs.set_ylabel("Emission Measure [$10^{26} cm^{-5}$]")
+        axs.set_yscale("log")
+        axs.set_aspect(0.2)
+        # axs.set_xticks(np.arange(5.6, 8.0, 0.2))
+        axs.set_xticks(np.arange(5.6, 7.5, 0.2))
+
+        # plot emission cube
+        axs.legend(loc = 'upper left')
+        plt.pause(0.001)
+        plt.savefig(fname = savedir + "/2011/lociplots_140-250_only/" + file[:-4] + ".png")
+        # fig.show()

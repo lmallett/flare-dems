@@ -30,6 +30,9 @@ path = "E:\\2011_08_09\\emcubes\\all\\"
 # path = "E:\\2014_09_10\\emcubes\\all\\"
 # path = "E:\\2011_08_09.tar\\2011_08_09\\emcubes\\all\\"
 
+# path = "E:\\emcubes_110809\\uncropped\\"
+# path = "E:\\emcubes_140910\\uncropped\\"
+
 # Path to response functions
 pathresp = "aia_response_2011.sav"
 
@@ -59,6 +62,9 @@ r193 = respinfo['r193']
 r211 = respinfo['r211']
 r335 = respinfo['r335']
 logt = respinfo['logt']
+
+# logt = np.linspace(0,1, num = 25)
+
 logte = ((respinfo['r'])['logte'])[0]
 
 # only select data at the same logT values (response functions are defined at more logT values than DEM solutions)
@@ -73,13 +79,19 @@ fig.tight_layout()
 plt.subplots_adjust(left = 0.07)
 
 axs[1].clear()
+
+axs[1].set_xlim(5.6, 8.0)
 axs[1].set_xlim(5.6, 7.5)
+
 axs[1].set_ylim(1, 10**6)
 axs[1].set_xlabel("$log(T)$")
 axs[1].set_ylabel("Emission Measure [$10^{26} cm^{-5}$]")
 axs[1].set_yscale("log")
 axs[1].set_aspect(0.2)
+
+# axs[1].set_xticks(np.arange(5.6, 8.0, 0.2))
 axs[1].set_xticks(np.arange(5.6, 7.5, 0.2))
+
 axs[1].tick_params(axis='both', which = 'both',
                     direction = 'in',
                     bottom = True, top= True, left= True, right = True)
@@ -114,7 +126,9 @@ def load_data(i):
     axs[0].clear()
     axs[0].imshow(np.sum(emcube, axis = 0)**0.25, origin = 'lower', cmap = 'binary_r', interpolation='none')
     axs[0].imshow(satmasked, cmap = 'hsv', origin = 'lower', interpolation = 'none')
-
+    
+    # line1 = axs[0].axhline(int(datacube.shape[0]/2), color="r", linestyle="--")
+    # line2 = axs[0].axvline(int(datacube.shape[1]/2), color="r", linestyle="--")
 
 def lociplots(x, y):
 
@@ -131,7 +145,7 @@ def lociplots(x, y):
     for j in range(6):
 
         respj = resp[j]
-        respj = respj[sel_ind] # 20x1 array
+        respj = respj[sel_ind] # 25x1 array
 
         # plot responses
         # IDL is col-major, so the data is unfortunately stored as [temp, y, x]
@@ -152,9 +166,11 @@ def on_move(event):
         col = int(xcoord + 0.5)
         row = int(ycoord + 0.5)
 
-        print(f'data coords row: {row} col: {col}')
+        # print(f'data coords row: {row} col: {col}')
 
         lociplots(col, row)
+
+
 
 def on_press(event):
     global image_index
