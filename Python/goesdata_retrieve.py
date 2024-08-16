@@ -1,3 +1,5 @@
+# This code creates GOES flux plots for a solar flare as desired.
+# Mostly copied from the following documentation:
 # https://docs.sunpy.org/en/latest/generated/gallery/time_series/goes_hek_m25.html
 
 import matplotlib.pyplot as plt
@@ -15,6 +17,8 @@ plt.rc('font',**font)
 # plt.rc('legend',**{'fontsize':14})
 # plt.rc('text.latex', preamble = r'\usepackage[utf8]{inputenc}')
 
+########################################################
+
 tstart = "2011-08-09 07:00"
 tend = "2011-08-09 10:00"
 diffractionstart = parse_time('2011-08-09 08:01:39.57Z').datetime
@@ -28,6 +32,8 @@ flareend = parse_time('2011-08-09 09:29:51.57').datetime
 # diffractionend = parse_time('2014-09-10 17:32:14.57Z').datetime
 # flarestart = parse_time('2014-09-10 17:15:02.57').datetime
 # flareend = parse_time('2014-09-10 18:44:38.57').datetime
+
+########################################################
 
 tr = a.Time(tstart, tend)
 
