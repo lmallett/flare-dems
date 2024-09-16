@@ -29,13 +29,13 @@ import sunpy.visualization.colormaps.color_tables as aiacolormaps
 # path = "E:\\emcubes_110809\\uncropped\\"
 # path = "E:\\emcubes_140910\\uncropped\\"
 
-path = "E:\\emcubes_110809\\"
-xregion = [350,650]
-yregion = [275,775]
+# path = "E:\\emcubes_110809\\"
+# xregion = [350,650]
+# yregion = [275,775]
 
-# path = "E:\\emcubes_140910\\"
-# xregion = [250,750]
-# yregion = [350,750]   
+path = "E:\\emcubes_140910\\"
+xregion = [250,750]
+yregion = [350,750]   
 
 # Path to response functions 
 pathresp = "aia_resp_full.sav"
@@ -67,7 +67,7 @@ fig, axs = plt.subplots(1,2)
 fig.tight_layout()
 plt.subplots_adjust(left = 0.07)
 
-image_index = 25
+image_index = 30
 
 def load_data(i):
 
@@ -88,6 +88,8 @@ def load_data(i):
     axs[0].imshow(emcubesum, origin = 'lower', cmap = 'binary_r')
     axs[1].imshow(data_stdevs, origin = 'lower', cmap = 'binary_r')
     axs[1].contour(emcubesum, [0])
+    axs[0].axis('off')
+    axs[1].axis('off')
     fig.show()
 
 def on_press(event):
