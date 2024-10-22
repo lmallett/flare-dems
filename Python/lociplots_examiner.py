@@ -7,12 +7,14 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 import scipy as sp
-from matplotlib.backend_bases import MouseButton
-from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
-import matplotlib.cm as cm
 import idl_colorbars
 
 import matplotlib as mpl
+from matplotlib.ticker import (AutoMinorLocator)
+import matplotlib.colors as colors
+import matplotlib.patches as mpatches
+from textwrap import wrap
+
 mpl.use('TkAgg')
 plt.rcParams['text.usetex'] = True
 import matplotlib.gridspec as gridspec
@@ -25,24 +27,17 @@ except:
 
 ##############################################
 ##############################################
-# CHANGE THESE LINES!
-##############################################
-##############################################
-
 # Path to folder containing .sav files, which contain image data at different timesteps
-# path = "E:\\2011_08_09\\emcubes\\all\\"
-# path = "E:\\2014_09_10\\emcubes\\all\\"
-# path = "E:\\2011_08_09.tar\\2011_08_09\\emcubes\\all\\"
+##############################################
+##############################################
 
-
-# path = "E:\\emcubes_110809\\"
 path = "E:\\emcubes_110809\\emcubes\\"
-path = "E:\\emcubes_no_335_110809\\emcubes_no_335\\"
-
+# path = "E:\\emcubes_no_335_110809\\emcubes_no_335\\"
 xregion = [350,650]
 yregion = [275,775]
 
-# path = "E:\\emcubes_140910\\"
+# path = "E:\\emcubes_140910\\emcubes\\"
+# path = "E:\\emcubes_140910\\emcubes_no_335\\"
 # xregion = [250,750]
 # yregion = [350,750]   
 
@@ -55,8 +50,8 @@ pathresp = "aia_resp_full.sav"
 # load in response functions as 20x1 arrays
 respinfo = sp.io.readsav(pathresp, python_dict = True, verbose = False)
 
-logte = (((respinfo['r'])['A94'])[0])['logte'][0]
-r94 = (((respinfo['r'])['A94'])[0])['tresp'][0]
+logte= (((respinfo['r'])['A94'])[0])['logte'][0]
+r94  = (((respinfo['r'])['A94'])[0])['tresp'][0]
 r131 = (((respinfo['r'])['A131'])[0])['tresp'][0]
 r171 = (((respinfo['r'])['A171'])[0])['tresp'][0]
 r193 = (((respinfo['r'])['A193'])[0])['tresp'][0]
@@ -67,8 +62,38 @@ r335 = (((respinfo['r'])['A335'])[0])['tresp'][0]
 ##############################################
 
 linecolors = ['r','g','b', 'c', 'm', 'y']
-contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
-greenwhite = idl_colorbars.getcmap(8)
+
+# contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
+# greenwhite = idl_colorbars.getcmap(8)
+
+# color_map1 = ['#000000', '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#eb34b7']
+# color_map = colors.ListedColormap(color_map1) 
+
+# color_list = ['#fdbf6f', '#a6cee3', '#1f78b4', '#b2df8a', '#eb34b7']
+
+color_list = [
+    "#e41a1c", # red
+    "#4daf4a", # green
+    "#377eb8", # blue
+    "#984ea3", # purple
+    "#ff7f00", # orange
+    ]
+color_map = colors.ListedColormap(color_list)
+sat_color = colors.ListedColormap(color_list[0])
+
+labels = [
+        "Data is saturated.",
+        "1: The objective function is unbounded.",
+        "2: No solution satisfies the given constraints.",
+        "3: The routine did not converge.",
+        "10: Solver sometimes returns negative coeffs in spite of constraints."
+        ]
+
+labels = ['\n'.join(wrap(v,20)) for v in labels]
+patches =[mpatches.Patch(color = color_list[i], label = labels[i]) for i in range(len(color_list))]
+
+##############################################
+##############################################
 
 filelist = os.listdir(path)
 
@@ -84,22 +109,11 @@ resps = np.array([r94, r131, r171, r193, r211, r335])
 ##############################################
 ##############################################
 
-# Create 2x2 sub plots
-
-# gs = gridspec.GridSpec(2, 2)
-# fig = plt.figure()
-
-# ax0 = fig.add_subplot(gs[0, 0]) # row 0, col 0
-# ax1 = fig.add_subplot(gs[1, 0], sharex = ax0, sharey = ax0) # row 1, col 0
-# ax2 = fig.add_subplot(gs[:, 1]) # col 1, span all rows
-
-# or dont
-gs = gridspec.GridSpec(1, 2)
+gs = gridspec.GridSpec(1, 2, wspace= 0.01)
 fig = plt.figure()
 
 ax0 = fig.add_subplot(gs[0, 0]) # row 0, col 0
-# ax1 = fig.add_subplot(gs[1, 0], sharex = ax0, sharey = ax0) # row 1, col 0
-ax2 = fig.add_subplot(gs[:, 1]) # col 1, span all rows
+ax1 = fig.add_subplot(gs[:, 1]) # col 1, span all rows
 
 ax0.set_xlim(5.6, 8.0)
 ax0.set_ylim(1, 10**6)
@@ -114,24 +128,20 @@ ax0.tick_params(which = 'minor', length = 5)
 ax0.xaxis.set_minor_locator(AutoMinorLocator(2))
 
 fig.set_size_inches(15, 5.5)
-fig.tight_layout()
+# fig.tight_layout()
 # plt.subplots_adjust(left = 0.07)
 
-# for future blitting optimization
-# background1 = fig.canvas.copy_from_bbox(ax2.bbox) 
-# background2 = fig.canvas.copy_from_bbox(ax0.bbox) 
-
-image_index = 25
+image_index = 35
 
 def load_data(i):
 
     global datacube
     global emcube
     global satmap
-    global axs
     global logt
     global sel_ind
     global resp
+    global statuscube
 
     # Change what file we're looking at
     file = filelist[i]
@@ -142,27 +152,38 @@ def load_data(i):
     logt = logte[sel_ind]
     resp = resps[:,sel_ind]
 
-    datacube = np.copy(vars.datacube[:,ystart:yend, xstart:xend])
-    satmap = np.copy(np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis=0))
+    datacube = vars.datacube[:,ystart:yend, xstart:xend]
+    satmap = np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis=0)
     satmasked = np.ma.masked_where(satmap < 1, satmap) # makes transparent satmap for overplotting
-    emcube = np.copy(vars.emcube[:,ystart:yend, xstart:xend])
+    emcube = vars.emcube[:,ystart:yend, xstart:xend]
+    emcubesummed = np.sum(emcube, axis = 0)**0.25
+
+    statuscube = vars.statuscube[ystart:yend, xstart:xend]
+    statusmasked = np.ma.masked_where(emcubesummed != 0, statuscube)
 
     # Plot image
-    ax2.clear()
-    ax2.imshow(np.sum(emcube, axis = 0)**0.25, origin = 'lower', cmap = 'binary_r', interpolation='none')
-    ax2.imshow(satmasked, cmap = 'hsv', origin = 'lower', interpolation = 'none')
-    
-    # line1 = ax2.axhline(int(datacube.shape[0]/2), color="r", linestyle="--")
-    # line2 = ax2.axvline(int(datacube.shape[1]/2), color="r", linestyle="--")
+    ax1.clear()
+    ax1.imshow(emcubesummed, origin = 'lower', cmap = 'binary_r', interpolation='none')
+
+    # choose cmap = 'hsv' or other map to see how saturated certain areas are
+    ax1.imshow(statusmasked, cmap = color_map, vmin = 0, vmax = 5, origin = 'lower', interpolation = 'none')
+    ax1.imshow(satmasked, cmap = sat_color, origin = 'lower', interpolation = 'none')
+
+    ax1.legend(handles = patches,
+               bbox_to_anchor=(1.05, 1),
+               loc = 2,
+               borderaxespad = 0,
+               fontsize = 'small',
+               labelspacing = 1)
 
 def lociplots(x, y):
 
     global resp
     global sel_ind
+    global statuscube
 
-    # causes an ignorable error due to sharey, see https://github.com/matplotlib/matplotlib/issues/9970
+    # sometimes causes an ignorable error due to sharey, see https://github.com/matplotlib/matplotlib/issues/9970
     ax0.clear()
-    # ax1.clear()
 
     ax0.set_xlim(5.6, 8.0)
     ax0.set_ylim(1, 10**6)
@@ -170,21 +191,12 @@ def lociplots(x, y):
     # IDL is col-major, so the data is unfortunately stored as [temp, y, x]
     ax0.step(logt, emcube[:,y,x], where = 'post', color = 'k', label = 'EM')
 
-    # ax2.text(50, 25, f"# saturated channels: {int(satmap[y,x])}", bbox=dict(fill=True, facecolor = 'white', edgecolor='black', linewidth=1))
-    ax0.set(title = f"num. saturated channels: {int(satmap[y,x])}")
+    ax0.set(title = f"num. saturated channels: {int(satmap[y,x])} \n status code: {int(statuscube[y,x])}")
+
     ax0.set_xlabel("$log(T)$")
     ax0.set_ylabel("Emission Measure [$10^{26} cm^{-5}$]")
 
     locis = ( datacube[:,y,x][:,None] / resp ) / (10**26) # produces an array of the 6 functions to be plotted
-    # loci_avgs = np.average(locis, axis=0).astype(float)
-    # loci_stdevs= np.std(locis.astype(float), axis=0).astype(float)
-    # print(loci_avgs.shape)
-    # print(loci_stdevs.shape)
-    # print(sp.integrate.simpson(loci_stdevs, x=logt))
-    # ax0.plot(logt, loci_avgs, color = 'r', linestyle = 'dashed', label = 'loci mean')
-    # ax1.plot(logt, loci_stdevs, label = 'standard deviation at each temp')
-    # ax1.grid()
-    # ax1.set_aspect(0.2)
 
     #PLOTTING 
 
@@ -197,14 +209,12 @@ def lociplots(x, y):
     fig.show()
 
 def on_move(event):
-    if event.inaxes is ax2:
+    if event.inaxes is ax1:
 
         xcoord = event.xdata
         ycoord = event.ydata
         col = int(xcoord + 0.5)
         row = int(ycoord + 0.5)
-
-        # print(f'data coords row: {row} col: {col}')
 
         lociplots(col, row)
 
