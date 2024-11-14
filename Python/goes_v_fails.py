@@ -1,3 +1,7 @@
+# (c) Lucien Mallett
+# This program produces a GOES flux plot over time
+# As well as showing how many DEM inversion failures fail over time
+
 import os
 import numpy as np
 import scipy as sp
@@ -13,7 +17,6 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 plt.rcParams['text.usetex'] = True
 
-# plt.rcParams['text.usetex'] = True
 plt.rc('text',usetex=True)
 font = {'family':'serif','size':16}#, 'serif': ['computer modern roman']}
 plt.rc('font',**font)
@@ -22,7 +25,8 @@ plt.rc('font',**font)
 
 ##############################################
 ##############################################
-# Path strings and region selection
+# Path to folder containing .sav files, which contain image data at different timesteps
+# Select region for view
 ##############################################
 ##############################################
 
@@ -46,17 +50,21 @@ yregion = [275,775]
 
 # # Uncomment these lines to get results; save them as a list
 
-# numfails = np.zeros_like(filelist)
-# for i, file in enumerate(filelist):
-#     print(i)
-#     vars = sp.io.readsav(path + file)
-#     emcube = np.sum(vars.emcube[:,ystart:yend, xstart:xend], axis = 0)              # creates 2D emcube array
-#     # add in saturation map so that we don't include pixels that are saturated. since satmap is 1/0, excludes pixels that were saturated in DEM fail from count
-#     emcube = emcube + np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis = 0)     
+numfails = np.zeros_like(filelist)
+for i, file in enumerate(filelist):
+    print(i)
 
-#     numfails[i] = np.count_nonzero(emcube == 0) # counterintuitively, this counts zeros.
+    # vars = sp.io.readsav(path + file)
+    # emcube = np.sum(vars.emcube[:,ystart:yend, xstart:xend], axis = 0)              # creates 2D emcube array
+    vars = np.load(file)
+    statuscube = vars.statuscube[ystart:yend, xstart:xend]
 
-# print(numfails)
+    # add in saturation map so that we don't include pixels that are saturated. since satmap is 1/0, excludes pixels that were saturated in DEM fail from count
+    # emcube = emcube + np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis = 0)
+    statuscube = statuscube + np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis = 0)
+    numfails[i] = np.count_nonzero(emcube == 0) # counterintuitively, this counts zeros.
+
+print(numfails)
 
 ##############################################
 # This data is produced from numfails
@@ -228,6 +236,7 @@ axs[0].axvspan(
     label = np.str_("Data Gathered")
     # label= flares_hek['fl_goescls']
 )
+
 # Show red region where we are excluding data
 axs[0].axvspan(
     diffractionstart,
@@ -237,15 +246,15 @@ axs[0].axvspan(
     label = np.str_("Data Excluded")
 )
 
-axs[0].set_yticks(ticks = [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2], minor = True)
-axs[0].yaxis.grid(True)
-
-axs[0].set_xlim(tr.start.to_datetime(), tr.end.to_datetime())
-axs[0].set_ylabel(r'SXR Flux $[\mathrm{W} \; \mathrm{m}^{-2}]$', rotation = 'horizontal', labelpad = 80)
 axs[0].legend(loc = 1)
 
+axs[0].set_xlim(tr.start.to_datetime(), tr.end.to_datetime())
+axs[0].set_yticks(ticks = [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2], minor = True)
 axs[0].set_yscale('log')
+axs[0].yaxis.grid(True)
+
 axs[0].set_xlabel("Time")
+axs[0].set_ylabel(r'SXR Flux $[\mathrm{W} \; \mathrm{m}^{-2}]$', rotation = 'horizontal', labelpad = 80)
 
 goesclass = axs[0].twinx()
 goesclass.set_ylabel("GOES \nFlare \nClass", rotation = 'horizontal', va = 'center', ha = 'left', labelpad = 40)
@@ -259,13 +268,6 @@ goesclass.set_yticks([])
 # centers = np.logspace(-7.5, -3.5, len(labels))
 # for value, label in zip(centers, labels):
 #     axs[0].text(-0.02, value, label, transform=axs[0].get_yaxis_transform(), horizontalalignment='center')
-
-for t in plot.texts:
-    t.set_visible(False)
-labels = ['A', 'B', 'C', 'M', 'X']
-centers = np.logspace(-7.5, -3.5, len(labels))
-for value, label in zip(centers, labels):
-    axs[0].text(1.02, value, label, transform=axs[0].get_yaxis_transform(), horizontalalignment='center', verticalalignment = 'top')
 
 ########################################################
 # Fails of DEM

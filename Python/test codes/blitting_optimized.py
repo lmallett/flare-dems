@@ -13,14 +13,13 @@ import numpy as np
 import scipy as sp
 import idl_colorbars
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import matplotlib.gridspec as gridspec
 import matplotlib.patches as mpatches
-from matplotlib.ticker import AutoMinorLocator
-import matplotlib.colors as colors
-
-from textwrap import wrap
+from matplotlib.backend_bases import MouseButton
+from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
+import matplotlib.cm as cm
 
 mpl.use('TkAgg')
 plt.rcParams['text.usetex'] = True
@@ -38,25 +37,39 @@ except:
 ##############################################
 ##############################################
 
-# Path to response functions
-pathresp = "aia_resp_full.sav"
-
 path = "E:\\emcubes_110809\\emcubes\\"
 # path = "E:\\emcubes_no_335_110809\\emcubes_no_335\\"
-xregion = [350,650]
-yregion = [275,775]
+xregion = [400,600]
+yregion = [400,600]
+pathresp = "aia_resp_full.sav"
 
 # path = "E:\\emcubes_140910\\emcubes\\"
-# path = "E:\\emcubes_140910\\emcubes_no_335\\"
+# xregion = [400,600]
+# yregion = [400,600]
 # xregion = [250,750]
-# yregion = [350,750]   
+# yregion = [350,750]  
 
 # Set what image you want to start at
 image_index = 45
 
-##############################################
-##############################################
-# Initialization
+# And the temperature you want to compare
+temp = 6.8
+temp = 7.1
+
+# when examining the ratios between the channel and the minimum,
+# it can be useful to only look at ratios below a certain value
+# specified by this parameter.
+clip_value = 5
+
+temp_label = {
+    "6.8": 94,
+    "7.1": 131
+}
+temp_idx = {
+    "6.8": 0,
+    "7.1": 1
+}
+
 ##############################################
 ##############################################
 
@@ -77,40 +90,13 @@ r171 = (((respinfo['r'])['A171'])[0])['tresp'][0]
 r193 = (((respinfo['r'])['A193'])[0])['tresp'][0]
 r211 = (((respinfo['r'])['A211'])[0])['tresp'][0]
 r335 = (((respinfo['r'])['A335'])[0])['tresp'][0]
+resps= np.array([r94, r131, r171, r193, r211, r335])
 
 allwaves  = [94,131,171,193,211,335]
 
-resps = np.array([r94, r131, r171, r193, r211, r335])
-
 linecolors = ['r','g','b', 'c', 'm', 'y']
-# contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
+contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
 greenwhite = idl_colorbars.getcmap(8)
-
-# color_map1 = ['#000000', '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#eb34b7']
-# color_list = ['#fdbf6f', '#a6cee3', '#1f78b4', '#b2df8a', '#eb34b7']
-# color_map = colors.ListedColormap(color_map1) 
-
-color_list = [
-    "#e41a1c", # red
-    "#4daf4a", # green
-    "#377eb8", # blue
-    "#984ea3", # purple
-    "#ff7f00", # orange
-    ]
-color_map = colors.ListedColormap(color_list)
-sat_color = colors.ListedColormap(color_list[0])
-
-# clean handling of multiline custom legend
-labels = [
-        "Data is saturated.",
-        "1: The objective function is unbounded.",
-        "2: No solution satisfies the given constraints.",
-        "3: The routine did not converge.",
-        "10: Solver sometimes returns negative coeffs in spite of constraints."
-        ]
-
-labels = ['\n'.join(wrap(v,20)) for v in labels]
-patches =[mpatches.Patch(color = color_list[i], label = labels[i]) for i in range(len(color_list))]
 
 ##############################################
 ##############################################
@@ -119,11 +105,12 @@ patches =[mpatches.Patch(color = color_list[i], label = labels[i]) for i in rang
 ##############################################
 
 fig = plt.figure()
-fig.set_size_inches(12, 5.5)
-gs = gridspec.GridSpec(1, 2, wspace= 0.01)
+fig.set_size_inches(15, 5.5)
+gs = gridspec.GridSpec(1, 3, width_ratios= [2, 1, 1], figure = fig)
 
-ax0 = fig.add_subplot(gs[:, 0]) # locitplots
-ax1 = fig.add_subplot(gs[:, 1]) # image plot
+ax0 = fig.add_subplot(gs[0])    # lociplots
+ax1 = fig.add_subplot(gs[1])    # left plot
+ax2 = fig.add_subplot(gs[2])    # right plot
 
 ax0.set(aspect = 0.2,
         title = "Loci curves, data $y_i$ divided by response function $K_i$",
@@ -134,12 +121,30 @@ ax0.set(aspect = 0.2,
         xticks = np.arange(5.6, 8.0, 0.2),
         yscale = "log")
 
-ax0.tick_params(axis='both', which = 'both',
-                    direction = 'in',
-                    bottom = True, top= True, left= True, right = True)
+ax0.tick_params(axis = 'both', which = 'both', direction = 'in',
+                bottom = True, top = True, left = True, right = True)
 ax0.tick_params(which = 'major', length = 10)
 ax0.tick_params(which = 'minor', length = 5)
 ax0.xaxis.set_minor_locator(AutoMinorLocator(2))
+ax0.vlines(temp, ymin = 0, ymax = 10**6, colors='r', linestyle = 'dashed')
+
+ax1.set(title = r"Minimum channel at $\mathrm{log}T$" + f"$ = {temp:0.1f}$",
+        xticks = [], yticks = [])
+
+norm = mpl.colors.Normalize(vmin = 0, vmax = 2)
+cmap0= mpl.colormaps['binary']
+rgba = [cmap0(0), cmap0(0.5), cmap0(1.0)]
+cmap = mpl.colors.ListedColormap(rgba)
+patch94  = mpatches.Patch(facecolor = cmap(0.0), edgecolor = 'k', label='Min: 94')
+patch131 = mpatches.Patch(facecolor = cmap(0.5), edgecolor = 'k', label='Min: 131')
+patch335 = mpatches.Patch(facecolor = cmap(1.0), edgecolor = 'k', label='Min: 335')
+ax1.legend(handles=[patch94, patch131, patch335],
+        #    bbox_to_anchor=(1, 0)
+            )
+
+ax2.sharey(ax1)
+ax2.set(title = f"Ratio of $y_{{{temp_label[str(temp)]}}} / K_{{{temp_label[str(temp)]}}}$ to minimum $y_i/K_i$",
+        xticks = [], yticks = [])
 
 ##############################################
 ##############################################
@@ -148,16 +153,20 @@ ax0.xaxis.set_minor_locator(AutoMinorLocator(2))
 ##############################################
 
 def load_data(i):
-    """Produces the image for the current file that is loaded -- sets up right-hand panel."""
-    
+
     global datacube
     global emcube
-    global statuscube
     global satmap
 
     global logt
-    global resp
     global sel_ind
+    global temp_index
+    global resp
+    global cbar
+
+    global ratiomap
+    global min_resp
+    global arg_min_resp
 
     # Change what file we're looking at
     file = filelist[i]
@@ -168,50 +177,56 @@ def load_data(i):
     logt = logte[sel_ind]
     resp = resps[:,sel_ind]
 
-    # IDL is col-major, so the data is unfortunately stored as [channel, y, x]
-    datacube = vars.datacube[:,ystart:yend, xstart:xend]
+    # confirming which index is logT = temp
+    temp_index = (np.where(logt == temp))[0][0]     # np returns tuple so we need to index
+    comp_list = np.array([resp[0][temp_index], resp[1][temp_index], resp[-1][temp_index]])
+    print(logt[temp_index])
+    print(comp_list)
 
-    satmap = np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis = 0)
-    satmasked = np.ma.masked_where(satmap < 1, satmap)      # makes array displaying which pixels are saturated
+    satmap = np.copy(np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis=0))
+    emcube = np.copy(vars.emcube[:,ystart:yend, xstart:xend])
+    flatem = np.sum(emcube, axis = 0)
+    emmasked = np.ma.masked_where(flatem != 0, flatem)      # make transparent emcube for overplotting
 
-    emcube = vars.emcube[:,ystart:yend, xstart:xend]
-    emcubesummed = np.sum(emcube, axis = 0)**0.25
+    datacube = np.copy(vars.datacube[:,ystart:yend, xstart:xend])
+    data_limited = np.delete(datacube, [2,3,4], axis = 0)   # deletes channels 171, 193, 211
 
-    # makes array describing why each DEM failed
-    statuscube = vars.statuscube[ystart:yend, xstart:xend]
-    statusmasked = np.ma.masked_where(emcubesummed != 0, statuscube)
+    respmap = data_limited / comp_list[:, None, None]       # gets y/K for logT = 7.1 for 94, 131, 335 channels. [3, x, y]
+    respmap = respmap / 1e26
+
+    min_resp = np.min(respmap, axis = 0)                # finds min of those channels
+    arg_min_resp = np.argmin(respmap, axis = 0)
+    
+    print(temp_idx[str(temp)])
+    ratiomap = np.abs(respmap[temp_idx[str(temp)],:,:] / min_resp[:,:])   # finds ratio between 131 and the minimum
+    ratiomap = np.clip(ratiomap, a_min = 0, a_max= 5)
 
     # Plot image
-    ax1.clear()
-    ax1.imshow(emcubesummed, origin = 'lower', cmap = 'binary_r', interpolation='none')
+    ax1.imshow(arg_min_resp, origin = 'lower', interpolation = 'none', cmap = cmap, norm = norm)
+    ax1.imshow(emmasked, origin = 'lower', interpolation = 'none', cmap = 'Reds_r', alpha= 0.5)
 
-    # choose cmap = 'hsv' or other map to see how saturated certain areas are
-    ax1.imshow(statusmasked, cmap = color_map, vmin = 0, vmax = 5, origin = 'lower', interpolation = 'none')
-    ax1.imshow(satmasked, cmap = sat_color, origin = 'lower', interpolation = 'none')
+    ratios = ax2.imshow(ratiomap, origin = 'lower', interpolation ='none', cmap = 'viridis', vmin = 0, vmax = clip_value)
+    # ax2.imshow(emmasked, origin = 'lower', interpolation='none', cmap = 'Reds_r', alpha=0.5)
 
-    ax1.legend(handles = patches,
-               bbox_to_anchor=(1.05, 1),
-               loc = 2,
-               borderaxespad = 0,
-               fontsize = 'small',
-               labelspacing = 1)
+    cax = fig.add_axes([ax2.get_position().x1 + 0.01, ax2.get_position().y0, 0.01, ax2.get_position().height])
+    cbar = plt.colorbar(mappable = ratios, cax = cax,
+                ticks = np.arange(0, clip_value+1)
+                )
 
 def lociplots(x, y):
-    """Handles left-hand plot based on x, y position of the mouse on the right-hand side of the plot.
-    For each channel, divide the data by its corresponding response function.
-    """
 
     global resp
     global sel_ind
-    global statuscube
+    global temp_index
+    global ratiomap
 
+    global min_resp
+    global arg_min_resp
+
+    # IDL is col-major, so the data is unfortunately stored as [temp, y, x]
     locis = ( datacube[:,y,x][:,None] / resp ) / (10**26) # produces an array of the 6 functions to be plotted
 
-    # sometimes causes an ignorable error due to sharey
-    # see https://github.com/matplotlib/matplotlib/issues/9970
-    # ax1.clear()
-
-    # Plotting 
+    # Plotting
     for line in list(ax0.lines):
         line.remove()
     for txt in list(ax0.texts):
@@ -220,16 +235,14 @@ def lociplots(x, y):
     ax0.step(logt, emcube[:,y,x], where = 'post', color = 'k', label = 'EM')
     ax0.text(0, -0.2, f"num. saturated channels: {int(satmap[y,x])}", fontsize = 'medium', transform=ax0.transAxes)
 
-    for j in range(6):
-        ax0.semilogy(logt, locis[j], color = linecolors[j], label = "${0} {1}$".format(allwaves[j], "\mathrm{\AA}"))            
+    for j in [0,1,5]:
+        ax0.semilogy(logt, locis[j], color = linecolors[j], label = "${0} {1}$".format(allwaves[j], "\mathrm{\AA}"))        
     ax0.legend(loc = 'upper left')
 
     fig.show()
 
 def on_move(event):
-    """Updates loci plots with mouse movement."""
-
-    if event.inaxes is ax1:
+    if event.inaxes is ax1 or event.inaxes is ax2:
 
         xcoord = event.xdata
         ycoord = event.ydata
@@ -240,9 +253,10 @@ def on_move(event):
         lociplots(col, row)
 
 def on_press(event):
-    """Handles flipping between images."""
-
     global image_index
+
+    global cbar
+    cbar.remove()
 
     sys.stdout.flush()
     if event.key == "left":
@@ -256,12 +270,13 @@ def on_press(event):
     print(filelist[image_index])
 
     # also updates the lociplots if necessary
-    if event.inaxes is ax1:
+    if event.inaxes is ax1 or event.inaxes is ax2:
         xcoord = event.xdata
         ycoord = event.ydata
         col = int(xcoord + 0.5)
         row = int(ycoord + 0.5)
         lociplots(col, row)
+
 
 load_data(image_index)
 

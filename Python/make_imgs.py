@@ -1,106 +1,224 @@
 # (c) Lucien Mallett 2024
+# Produces images from .sav files containing saved variables.
 
-# This code assumes that, in "savedir/", the following folders exist:
-    # - data_94/
-    # - data_131/
-    # - data_171/
-    # - data_193/
-    # - data_211/
-    # - data_335/
-    # - contoured_data_94/
-    # - contoured_data_131/
-    # - contoured_data_171/
-    # - contoured_data_193/
-    # - contoured_data_211/
-    # - contoured_data_335/
-    # - emcubes/
-    # - contoured_emcubes/
-
-# and that "path/" contains .sav files, which contain the L1.5 data.
+import os
 
 import scipy as sp
-import skimage as ski
 import numpy as np
+
 import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import idl_colorbars
-import os
+from mpl_toolkits.axes_grid1 import ImageGrid
+import matplotlib.colors as colors
+matplotlib.use("Agg")
+
 import astropy.units as u
 import sunpy.visualization.colormaps.color_tables as aiacolormaps
+import idl_colorbars
 
-# Path to folder containing .sav files, which contain image data
+##############################################
+##############################################
+# Path to folder containing .sav files, which contain image data at different timesteps
+# Select region for view
+##############################################
+##############################################
 
-# OLD PATHS
-# path = "E:\\2011_08_09\\emcubes\\all\\"
-# path = "E:\\2014_09_10\\emcubes\\all\\"
+# Path to response functions
+pathresp = "aia_resp_full.sav"
 
-path = "E:\\emcubes_110809\\"
-savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2011/"
-xregion = [350,650+1]
-yregion = [275+30,775-29]
+##############################################
 
-path = "E:\\emcubes_140910\\"
-savedir = "C:/Users/Lucien/Documents/School/Research - Thesis/movies/2014/"
+path = "E://emcubes_110809//emcubes_np//"
+dir_emcubes = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//emcubes//"
+dir_statuscubes = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//statuscubes//"
+
+# path = "E://emcubes_no_335_110809//emcubes_no_335_np//"
+# dir_emcubes = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//emcubes_no335//"
+
+# datadir = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//"
+
+xregion = [350,651]
+yregion = [305,746]
+
+##############################################
+
+path = "E://emcubes_140910//emcubes_np//"
+dir_emcubes = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2014//emcubes//"
+# datadir = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2014//"
+
 xregion = [250,750]
-yregion = [350,750]   
+yregion = [350,600]
+
+##############################################
+
+dirs = {
+    94: "data_94//",
+    131: "data_131//",
+    171: "data_171//",
+    193: "data_193//",
+    211: "data_211//",
+    335: "data_335//"
+    }
+
+##############################################
+##############################################
+# Initialization
+##############################################
+##############################################
 
 greenwhite = idl_colorbars.getcmap(8)
 contourclrs = ['#ff14ec', '#8f0ad1', '#1e00b6']
 filelist = os.listdir(path)
-
-# directories to put individual frames in
-dirs = {
-    94: "data_94/",
-    131: "data_131/",
-    171: "data_171/",
-    193: "data_193/",
-    211: "data_211/",
-    335: "data_335/",
-    "emcube": "emcubes/"}
 
 xstart  = xregion[0]
 xend    = xregion[1]-1
 ystart  = yregion[0]
 yend    = yregion[1]-1
 
+color_list = [
+    # "#e41a1c", # red
+    "#000000",
+    # "#4daf4a", # green
+    "#61DA5D", # green
+    # "#377eb8", # blue
+    "#00B8FF", # blue
+    # "#984ea3", # purple
+    "#FF4FC1", # pink
+    # "#ff7f00", # orange
+    "#ffff00"    # yellow
+    ]
+
+color_list = [
+    # "#e41a1c", # red
+    "#000000",
+    # "#4daf4a", # green
+    "#88DC85",
+    # "#377eb8", # blue
+    # "#33A0F9",
+    "#576BFF",
+    # "#984ea3", # purple
+    # "#FF4FC1", # pink
+    "#FF63C2",
+    "#ffff00"    # yellow
+    ]
+
+# color_list = [
+#     '#000000',  # black
+#     '#a6cee3',  # l-blue
+#     '#1f78b4',  # d-blue
+#     '#b2df8a',  # l-green
+#     '#33a02c',  # d-green
+#     '#eb34b7'   # pink
+# ]
+# color_list = [
+#     "#000000", # black
+#     "#40B936", # green
+#     "#6BCEFF", # blue
+#     "#FF4FC1", # pink
+#     "#FFDE3B", # yellow
+# ]
+
+color_map = colors.ListedColormap(color_list)
+sat_color = colors.ListedColormap("#e41a1c")
+# sat_color = colors.ListedColormap("#AF0B00")
+# sat_color = colors.ListedColormap("#515477")
+
+
 allwaves  = [94,131,171,193,211,335]
 
-######################################################################
-######################################################################
-######################################################################
-######################################################################
+##############################################
+##############################################
+# Functions
+##############################################
+##############################################
 
-def imgs_emcubes():
-    """Produces frames for a movie of the event, where the data plotted is the sum of the emission cubes over logT.
+def imgs_emcubes(contour_sat = False, color_sat = False, status = False):
+    """Produces frames for a movie of the event, where the data plotted is the sum of the emission cubes over logT, with saturated pixels contoured on it.
     Args:
         None.
     Returns:
-        None.
-        Saves a series of images into the directory savedir/emcubes/.
+        None. Saves a series of images into the directory.
     """
 
     for i in range(len(filelist)):
 
-        # read in data & modify it
         file = filelist[i]
         filename = path + file
+        print(filename)
 
-        print(file)
-        vars = sp.io.readsav(filename, python_dict = False, verbose = False)
-        data = (np.sum(vars.emcube[:,ystart:yend,xstart:xend], axis = 0)**0.25)
+        vars = np.load(filename)
+        emcube = (np.sum( (vars["emcube"])[:,ystart:yend,xstart:xend], axis = 0)**0.25)
+        # # could also load in .sav files
+        # vars = sp.io.readsav(filename)
+        # emcube = (np.sum(vars.emcube[:,ystart:yend,xstart:xend], axis = 0)**0.25)
 
-        # plot data
-        plt.imshow(data, cmap = 'binary_r', origin='lower')
-        plt.axis('off')
-        plt.imsave(savedir + dirs["emcube"] + file[:-4] + ".png", data, cmap = 'binary_r',  origin='lower')
+        fig = plt.figure(num = 1, clear = True, frameon = False)
+        fig.set_size_inches(emcube.shape[1], emcube.shape[0])
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        fig.add_axes(ax)
 
-    plt.close()
+        ax.imshow(emcube, cmap = 'gray', interpolation = 'none', origin = 'lower',)
 
-######################################################################
-######################################################################
-######################################################################
-######################################################################
+        if contour_sat == True:
+            # sat = np.sum(np.copy(vars.satmap[:,ystart:yend,xstart:xend]), 0)
+            sat = np.sum(np.copy((vars["satmap"])[:,ystart:yend,xstart:xend]), 0)
+
+            sat = sat.astype('int32')
+            ax.contour(sat, levels = [0, 2, 4], colors = contourclrs, antialiased = False)#linewidths = 100)
+        
+        if color_sat == True:
+            # satmap = np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis = 0)
+            satmap = np.sum((vars["satmap"])[:,ystart:yend, xstart:xend], axis = 0)
+
+            satmasked = np.ma.masked_where(satmap < 1, satmap)      # makes array displaying which pixels are saturated
+            ax.imshow(satmasked, cmap = sat_color, origin = 'lower', interpolation = 'none')
+
+        if status == True: 
+            # statuscube = vars.statuscube[ystart:yend, xstart:xend]
+            statuscube = (vars["statuscube"])[ystart:yend, xstart:xend]
+
+            statusmasked = np.ma.masked_where(emcube != 0, statuscube)
+
+            ax.imshow(statusmasked, cmap = color_map, vmin = 0, vmax = 5, origin = 'lower', interpolation = 'none')
+
+        fig.savefig(dir_emcubes + file[:-4] + ".webp", 
+                    pad_inches = 0, 
+                    bbox_inches= 'tight',
+                    dpi = 1,
+                    pil_kwargs = {'lossless':True}
+                    )
+        
+        plt.clf()
+    return
+
+# def imgs_emcubes(sat = False, status = False):
+
+#     for i in range(len(filelist)):
+
+#         file = filelist[i]
+#         filename = path + file
+#         print(file)
+
+#         vars = sp.io.readsav(filename, python_dict = False, verbose = False)
+#         emcube = (np.sum(vars.emcube[:,ystart:yend,xstart:xend], axis = 0)**0.25)
+
+#         if sat == True:
+#             satmap = np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis = 0)
+#             satmasked = np.ma.masked_where(satmap < 1, satmap)      # makes array displaying which pixels are saturated
+#         if status == True:
+#             statuscube = vars.statuscube[ystart:yend, xstart:xend]
+#             statusmasked = np.ma.masked_where(emcube != 0, statuscube)
+
+#         plt.imsave(dir_emcubes_emcubes + file[:-4] + ".webp", 
+#                    data, 
+#                    cmap = 'binary_r',  origin='lower',
+#                    pil_kwargs={'lossless':True},
+#                    format = 'webp')
+
+#     plt.close()
+
+# directories to put individual frames in
 
 def imgs_datacubes(wavelength = allwaves):
     """Produces frames for a movie of the event in the specified AIA wavelength (94, 131, 171, 193, 211, or 335).
@@ -108,258 +226,77 @@ def imgs_datacubes(wavelength = allwaves):
         (Optional) An integer, or list of integers, that is a subset of [94,131,171,193,211,335].
     Returns:
         None.
-        Saves a series of images into the directory savedir/data_[wave]/.
+        Saves a series of images into the directory datadir/data_[wave]/.
     """
 
     if type(wavelength) != list:
+        print("a")
         wavelength = [wavelength]
 
-    imglist = []    # list of datacubes
-    for i in range(len(filelist)):
-
-        # read in data & modify it
-        file = filelist[i]
-        filename = path + file
-
-        print(file)
-        vars = sp.io.readsav(filename)#, python_dict = False, verbose = False)
-
-        data = np.copy(vars.datacube[:,ystart:yend, xstart:xend])
-        data[data < 0] = 0
-        # data = data**0.25
-
-        # save modifed datacubes
-        imglist.append(data)
-
-    # maps what wavelength we want to 0-5
-    # convenient for accessing datacubes
+    print(wavelength)
+    # maps what wavelength we want to indices 0-5, for access purposes
     indices = [allwaves.index(wave) for wave in wavelength]
 
+    colors = [] # list of colormaps
     for e in indices:
+        colors.append(aiacolormaps.aia_color_table(allwaves[e] * u.Angstrom))
 
-        colors = aiacolormaps.aia_color_table(allwaves[e] * u.Angstrom) 
+    for i in range(len(filelist)):
 
-        for i in range(len(filelist)):            
+        file = filelist[i]
+        filename = path + file
+        print(filename)
 
-            # get data at timestamp, for only the relevant channel
-            file = filelist[i]
-            data = (imglist[i])[e,:,:]
+        vars = np.load(filename)
+        data = (vars["datacube"])[:, ystart:yend, xstart:xend]
+        data[data < 0] = 0
 
-            plt.imsave(savedir + dirs[allwaves[e]] + file[:-4] + ".png", data, cmap=colors, origin = 'lower')
+        for e in indices:
+            plt.imsave(datadir + dirs[allwaves[e]] + "a" + str(allwaves[e]) + file[10:-4] + ".webp",
+                data[e,:,:],
+                cmap = colors[e],
+                origin = 'lower')
 
     plt.close()
 
-######################################################################
-######################################################################
-######################################################################
-######################################################################
-
-def contoured_emcubes():
-    """Produces frames for a movie of the event, where the data plotted is the sum of the emission cubes over logT, with saturated pixels contoured on it.
+def imgs_statuscubes():
+    """Produces frames for a movie of the event, where the data plotted a color-coded map of the error code
+    returned by the DEM solver.
     Args:
         None.
     Returns:
-        None.
-        Saves a series of images into the directory savedir/contoured_emcubes/ with contours over emission cubes.
+        None. Saves a series of images into the directory.
     """
-
-    imglist = []
-    satimglist = []
 
     for i in range(len(filelist)):
 
-        # read in data & modify it
         file = filelist[i]
         filename = path + file
+        print(filename)
 
-        print(file)
-        vars = sp.io.readsav(filename)
+        vars = np.load(filename)
 
-        # sat = np.copy(vars.satmap[:,xstart:xend, ystart:yend])
-        sat = np.copy(vars.satmap[:,ystart:yend,xstart:xend])
+        statuscube = (vars["statuscube"])[ystart:yend, xstart:xend]
+        # statusmasked = np.ma.masked_where(emcube != 0, statuscube)
 
-        sat = np.sum(sat, 0)
-        sat = sat.astype('int32')
-
-        data = (np.sum(vars.emcube[:,ystart:yend,xstart:xend], axis = 0)**0.25)
-
-        print(data.shape)
-
-        # save modifed datacubes & satmaps
-        satimglist.append(sat)
-        imglist.append(data)
-  
-    for i in range(len(filelist)):          
-
-        # get data at timestamp, for only the relevant channel
-        file = filelist[i]
-        data = imglist[i]
-        sat  = satimglist[i]
-
-        # this is an awful way to plot the image with contours while retaining pixel sizes, but here we are
-        fig = plt.figure(frameon = False)
-        fig.set_size_inches(data.shape[1], data.shape[0])
+        fig = plt.figure(num = 1, clear = True, frameon = False)
+        fig.set_size_inches(statuscube.shape[1], statuscube.shape[0])
         ax = plt.Axes(fig, [0., 0., 1., 1.])
         ax.set_axis_off()
         fig.add_axes(ax)
 
-        ax.imshow(data, cmap = 'gray', interpolation='none', origin='lower')
+        ax.imshow(statuscube, cmap = color_map, vmin = 0, vmax = 5, origin = 'lower', interpolation = 'none')
 
-        print(satimglist[i].shape)
-        ax.contour(satimglist[i], levels = [1,3,5], colors = contourclrs, antialiased = False)#linewidths = 100)
-        fig.savefig(savedir + "contoured_" + dirs["emcube"] + file[:-4] + ".png", dpi = 1)
+        satmap = np.sum((vars["satmap"])[:,ystart:yend, xstart:xend], axis = 0)
+        satmasked = np.ma.masked_where(satmap < 1, satmap)      # makes array displaying which pixels are saturated
+        ax.imshow(satmasked, cmap = sat_color, origin = 'lower', interpolation = 'none')
 
-        fig.clf()
-        plt.close()
-
-        # # Attempt involving rounding contours to nearest pixel
-        # # https://stackoverflow.com/questions/39642680/create-mask-from-skimage-contour
-        # contours = ski.measure.find_contours(sat, level=0.5, fully_connected='low', positive_orientation='low', mask=None)
-        # print(contours)
-        # clist = np.zeros_like(data, dtype='int')
-
-        # for contour in contours:
-        #     clist[np.round(contour[:, 0]).astype('int'), np.round(contour[:, 1]).astype('int')] = 1
-
-        # print(clist)
-        # plt.matshow(clist)
-        # plt.show()
-
-        # # Without contours
-        # x = plt.imshow(data, cmap = 'binary_r', interpolation='none')
-        # print(type(x))
-        # plt.axis('off')
-        # plt.savefig(savedir + "contoured_" + dirs["emcube"] + file[:-4] + ".png", format='png', bbox_inches='tight', pad_inches=0)
-
-        # data = np.where(contours==1, A, B)
-        # plt.imsave(savedir + "contoured_" + dirs["emcube"] + file[:-4] + ".png", a)
-
-        # fig = plt.figure(frameon = False)
-        # fig.set_size_inches(data.shape[1], data.shape[0])
-        # ax = plt.Axes(fig, [0., 0., 1., 1.])
-        # ax.set_axis_off()
-        # fig.add_axes(ax)
-
-        # ax.imshow(data, interpolation='none')
-        # fig.savefig(savedir + "contoured_" + dirs["emcube"] + file[:-4] + ".png", dpi = 1)
-
-######################################################################
-######################################################################
-######################################################################
-######################################################################
-
-def contoured_data(wavelength = allwaves):
-    """Produces frames for a movie of the event in the specified AIA wavelength (94, 131, 171, 193, 211, or 335), where saturated pixels are contoured over the data.
-    Args:
-        (Optional) An integer, or list of integers, that is a subset of [94,131,171,193,211,335].
-    Returns:
-        None.
-        Saves a series of images into the directory savedir/contoured_data_[wave]/ with contours over saturated pixels.
-        Contours produced using satmap, not directly.
-    """
-    if type(wavelength) != list:
-        wavelength = [wavelength]
-
-    imglist = []
-    satimglist = []
-
-    for i in range(len(filelist)):
-
-        # read in data & modify it
-        file = filelist[i]
-        filename = path + file
-
-        print(file)
-        vars = sp.io.readsav(filename)
-
-        data = np.copy(vars.datacube[:, ystart:yend,xstart:xend])
-        data[data < 0] = 0
-        data = data**0.25
-
-        # save modifed datacubes & satmaps
-        satimglist.append(vars.satmap[:, ystart:yend,xstart:xend])
-        imglist.append(data)
-
-    # maps what wavelength we want to 0-5
-    # convenient for accessing datacubes
-    indices = [allwaves.index(wave) for wave in wavelength]
-
-    for e in indices:
-
-        colors = aiacolormaps.aia_color_table(allwaves[e] * u.Angstrom)
-
-        for i in range(len(imglist)):          
-
-            # get data at timestamp, for only the relevant channel
-            file = filelist[i]
-            data = (imglist[i])[e,:,:]
-            sat = (satimglist[i])[e,:,:]
-            print(data.shape)
-
-            fig = plt.figure(frameon = False)
-            fig.set_size_inches(data.shape[1], data.shape[0])
-            ax = plt.Axes(fig, [0., 0., 1., 1.])
-            ax.set_axis_off()
-            fig.add_axes(ax)
-
-            ax.imshow(data, cmap = colors, interpolation='none', origin='lower')
-            ax.contour(sat, levels = 1, colors = contourclrs[0], antialiased = False)#linewidths = 100)
-            fig.savefig(savedir + "contoured_" + dirs[allwaves[e]] + file[:-4] + ".png", dpi = 1)
-
-            fig.clf()
-    plt.close()
-
-            # plt.imshow(data, cmap = colors)
-            # plt.contour((satimglist[i])[e,:,:], colors = contourclrs, linewidths = 0.1)
-            # plt.axis('off')
-            # plt.savefig(savedir + "contoured_" + dirs[allwaves[e]] + file[:-4] + ".png", bbox_inches='tight', pad_inches=0)
-            # plt.clf()
-
-######################################################################
-######################################################################
-######################################################################
-######################################################################
-
-statuscolors = matplotlib.colors.ListedColormap(['#000000', '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#eb34b7'])
-
-def contoured_status():
-
-    statlist = []
-
-    for i in range(len(filelist)):
-
-        # read in data & modify it
-        file = filelist[i]
-        filename = path + file
-
-        print(file)
-        vars = sp.io.readsav(filename)
-
-        statuscube = np.copy(vars.statuscube[ystart:yend,xstart:xend])
-
-        print(statuscube.shape)
-        statuscube[statuscube == 10] = 4
-        statuscube[statuscube == 11] = 5
-
-        statlist.append(statuscube)
+        fig.savefig(dir_statuscubes + file[:-4] + ".webp", 
+                    pad_inches = 0, 
+                    bbox_inches= 'tight',
+                    dpi = 1,
+                    pil_kwargs = {'lossless':True}
+                    )
         
-    for i in range(len(statlist)):          
-
-        # get data at timestamp, for only the relevant channel
-        file = filelist[i]
-        status = (statlist[i])[:,:]
-
-
-        fig = plt.figure(frameon = False)
-        fig.set_size_inches(status.shape[1], status.shape[0])
-        ax = plt.Axes(fig, [0., 0., 1., 1.])
-        ax.set_axis_off()
-        fig.add_axes(ax)
-
-        ax.imshow(status, cmap = statuscolors, vmin = 0, vmax = 5, interpolation='none', origin='lower')
-        # ax.contour(sat, levels = 1, colors = contourclrs[0], antialiased = False)#linewidths = 100)
-        fig.savefig(savedir + "statuscubes/" + file[:-4] + ".png", dpi = 1)
-
-        fig.clf()
-    plt.close()
-
+        plt.clf()
+    return
