@@ -37,15 +37,16 @@ pressure=1d15
 ssw_path,/aia
 
 ;Solid angle of one AIA pixel:
-sterad_aia_pix=8.46158d-12
+sterad_aia_pix = 8.46158d-12
 
 ; get time-dependent, eve corrected, AIA effective areas
+PRINT, 'Get time-dep, EVE corrected, AIA effective areas'
 aia_resp = aia_get_response(/dn,/area,/eve, timedepend_date=time)
 
-verstr=ch_get_version()
+verstr = ch_get_version()
 
-comment='AIA responses calculated in the 25-900 Angstrom range with CHIANTI version '+$
-   verstr+' data '
+comment = 'AIA responses calculated in the 25-900 Angstrom range with CHIANTI version '+$
+   verstr +' data '
 
 
 if n_elements(density) gt 0 then $
@@ -65,6 +66,7 @@ resp_211=dblarr(n_elements(logt))
 resp_335=dblarr(n_elements(logt))
 
 if not file_exist(dir+dbase_fname) then begin
+    PRINT, 'these lines should not run!'
     isothermal, wmin, wmax, 0.1, temp, lambda,spectrum,list_wvl,list_ident,$
 	pressure=pressure, edensity=density,/photons,/cont , $
 	abund_name=abund_name, ioneq_name=ioneq_name, verbose=verbose

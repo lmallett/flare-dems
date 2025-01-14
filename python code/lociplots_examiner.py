@@ -39,15 +39,15 @@ except:
 ##############################################
 
 # Path to response functions
-pathresp = "aia_resp_full.sav"
+pathresp = "aia_resp_110809.sav"
 
-path = "E:\\emcubes_110809\\emcubes\\"
-# path = "E:\\emcubes_no_335_110809\\emcubes_no_335\\"
+path = "D:\\emcubes_110809\\emcubes\\"
+# path = "D:\\emcubes_no_335_110809\\emcubes_no_335\\"
 xregion = [350,650]
 yregion = [275,775]
 
-# path = "E:\\emcubes_140910\\emcubes\\"
-# path = "E:\\emcubes_140910\\emcubes_no_335\\"
+# path = "D:\\emcubes_140910\\emcubes\\"
+# path = "D:\\emcubes_140910\\emcubes_no_335\\"
 # xregion = [250,750]
 # yregion = [350,750]   
 
@@ -70,15 +70,22 @@ yend    = yregion[1]-1
 # load in response functions as 20x1 arrays
 respinfo = sp.io.readsav(pathresp, python_dict = True, verbose = False)
 
-logte= (((respinfo['r'])['A94'])[0])['logte'][0]
-r94  = (((respinfo['r'])['A94'])[0])['tresp'][0]
-r131 = (((respinfo['r'])['A131'])[0])['tresp'][0]
-r171 = (((respinfo['r'])['A171'])[0])['tresp'][0]
-r193 = (((respinfo['r'])['A193'])[0])['tresp'][0]
-r211 = (((respinfo['r'])['A211'])[0])['tresp'][0]
-r335 = (((respinfo['r'])['A335'])[0])['tresp'][0]
+# logte= (((respinfo['r'])['A94'])[0])['logte'][0]
+# r94  = (((respinfo['r'])['A94'])[0])['tresp'][0]
+# r131 = (((respinfo['r'])['A131'])[0])['tresp'][0]
+# r171 = (((respinfo['r'])['A171'])[0])['tresp'][0]
+# r193 = (((respinfo['r'])['A193'])[0])['tresp'][0]
+# r211 = (((respinfo['r'])['A211'])[0])['tresp'][0]
+# r335 = (((respinfo['r'])['A335'])[0])['tresp'][0]
+logte= (respinfo["aia_tresp"][0])[0]
+r94  = (respinfo["aia_tresp"][0])[2]
+r131 = (respinfo["aia_tresp"][0])[3]
+r171 = (respinfo["aia_tresp"][0])[4]
+r193 = (respinfo["aia_tresp"][0])[5]
+r211 = (respinfo["aia_tresp"][0])[6]
+r335 = (respinfo["aia_tresp"][0])[7]
 
-allwaves  = [94,131,171,193,211,335]
+allwaves = [94,131,171,193,211,335]
 
 resps = np.array([r94, r131, r171, r193, r211, r335])
 

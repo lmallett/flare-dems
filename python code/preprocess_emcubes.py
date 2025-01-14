@@ -2,14 +2,14 @@ import os
 import scipy as sp
 import numpy as np
 
-# path = "E://emcubes_110809//emcubes//"
+# path = "D://emcubes_110809//emcubes//"
 # savdir = "C://Users//Lucien//Documents//School//Research - Thesis//emcubes_np//"
 
-# path = "E://emcubes_no_335_110809//emcubes_no_335//"
-# savdir = "E://emcubes_no_335_110809//emcubes_no_335_np//"
+# path = "D://emcubes_no_335_110809//emcubes_no_335//"
+# savdir = "D://emcubes_no_335_110809//emcubes_no_335_np//"
 
-path = "E://emcubes_140910//emcubes//"
-savdir = "E://emcubes_140910//emcubes_np//"
+path = "D://emcubes_110809//emcubes_mchannel//m335//"
+savdir = "D://emcubes_110809//emcubes_mchannel//m335_np//"
 
 filelist = os.listdir(path)
 
@@ -25,7 +25,7 @@ for i in range(len(filelist)):
     datacube    = vars.datacube
     waveout     = vars.waveout
     exptimeout  = vars.exptimeout
-    satmap      = vars.satmap
+    # satmap      = vars.satmap
 
     np.savez(savdir + file[:-4],
              emcube = emcube,
@@ -34,4 +34,5 @@ for i in range(len(filelist)):
              datacube = datacube,
              waveout = waveout,
              exptimeout = exptimeout,
-             satmap = satmap)
+            #  satmap = satmap
+             )

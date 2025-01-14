@@ -28,13 +28,13 @@ from astropy import visualization
 # Path to response functions
 pathresp = "aia_resp_full.sav"
 
-path = "E:\\emcubes_110809\\emcubes\\"
-# path = "E:\\emcubes_no_335_110809\\emcubes_no_335\\"
+path = "D:\\emcubes_110809\\emcubes\\"
+# path = "D:\\emcubes_no_335_110809\\emcubes_no_335\\"
 xregion = [350,650]
 yregion = [275,775]
 
-# path = "E:\\emcubes_140910\\emcubes\\"
-# path = "E:\\emcubes_140910\\emcubes_no_335\\"
+# path = "D:\\emcubes_140910\\emcubes\\"
+# path = "D:\\emcubes_140910\\emcubes_no_335\\"
 # xregion = [250,750]
 # yregion = [350,750]
 

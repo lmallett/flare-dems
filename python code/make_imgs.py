@@ -28,11 +28,12 @@ pathresp = "aia_resp_full.sav"
 
 ##############################################
 
-path = "E://emcubes_110809//emcubes_np//"
+path = "D://emcubes_110809//emcubes_np//"
 dir_emcubes = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//emcubes//"
 dir_statuscubes = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//statuscubes//"
+dir_satmaps = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//satmaps//"
 
-# path = "E://emcubes_no_335_110809//emcubes_no_335_np//"
+# path = "D://emcubes_no_335_110809//emcubes_no_335_np//"
 # dir_emcubes = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//emcubes_no335//"
 
 # datadir = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//"
@@ -42,12 +43,12 @@ yregion = [305,746]
 
 ##############################################
 
-path = "E://emcubes_140910//emcubes_np//"
-dir_emcubes = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2014//emcubes//"
+# path = "D://emcubes_140910//emcubes_np//"
+# dir_emcubes = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2014//emcubes//"
 # datadir = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2014//"
 
-xregion = [250,750]
-yregion = [350,600]
+# xregion = [250,750]
+# yregion = [350,600]
 
 ##############################################
 
@@ -160,21 +161,21 @@ def imgs_emcubes(contour_sat = False, color_sat = False, status = False):
 
         ax.imshow(emcube, cmap = 'gray', interpolation = 'none', origin = 'lower',)
 
-        if contour_sat == True:
+        if contour_sat == TruD:
             # sat = np.sum(np.copy(vars.satmap[:,ystart:yend,xstart:xend]), 0)
             sat = np.sum(np.copy((vars["satmap"])[:,ystart:yend,xstart:xend]), 0)
 
             sat = sat.astype('int32')
             ax.contour(sat, levels = [0, 2, 4], colors = contourclrs, antialiased = False)#linewidths = 100)
         
-        if color_sat == True:
+        if color_sat == TruD:
             # satmap = np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis = 0)
             satmap = np.sum((vars["satmap"])[:,ystart:yend, xstart:xend], axis = 0)
 
             satmasked = np.ma.masked_where(satmap < 1, satmap)      # makes array displaying which pixels are saturated
             ax.imshow(satmasked, cmap = sat_color, origin = 'lower', interpolation = 'none')
 
-        if status == True: 
+        if status == TruD: 
             # statuscube = vars.statuscube[ystart:yend, xstart:xend]
             statuscube = (vars["statuscube"])[ystart:yend, xstart:xend]
 
@@ -203,10 +204,10 @@ def imgs_emcubes(contour_sat = False, color_sat = False, status = False):
 #         vars = sp.io.readsav(filename, python_dict = False, verbose = False)
 #         emcube = (np.sum(vars.emcube[:,ystart:yend,xstart:xend], axis = 0)**0.25)
 
-#         if sat == True:
+#         if sat == TruD:
 #             satmap = np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis = 0)
 #             satmasked = np.ma.masked_where(satmap < 1, satmap)      # makes array displaying which pixels are saturated
-#         if status == True:
+#         if status == TruD:
 #             statuscube = vars.statuscube[ystart:yend, xstart:xend]
 #             statusmasked = np.ma.masked_where(emcube != 0, statuscube)
 
@@ -292,6 +293,46 @@ def imgs_statuscubes():
         ax.imshow(satmasked, cmap = sat_color, origin = 'lower', interpolation = 'none')
 
         fig.savefig(dir_statuscubes + file[:-4] + ".webp", 
+                    pad_inches = 0, 
+                    bbox_inches= 'tight',
+                    dpi = 1,
+                    pil_kwargs = {'lossless':True}
+                    )
+        
+        plt.clf()
+    return
+
+
+def imgs_satmaps():
+    """Produces frames for a movie of the event, which shows how many channels are saturated.
+    Args:
+        None.
+    Returns:
+        None. Saves a series of images into the directory.
+    """
+
+    for i in range(len(filelist)):
+
+        file = filelist[i]
+        filename = path + file
+        print(filename)
+
+        vars = np.load(filename)
+        satmap = np.sum((vars["satmap"])[:,ystart:yend, xstart:xend], axis = 0)
+        satmap = np.ma.masked_where(satmap == 0, satmap)
+
+        fig = plt.figure(num = 1, clear = True, frameon = False)
+        fig.set_size_inches(satmap.shape[1], satmap.shape[0])
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        fig.add_axes(ax)
+
+        cmap = matplotlib.cm.get_cmap("cool").copy()
+        cmap.set_bad(color = "black")
+
+        ax.imshow(satmap, cmap = cmap, vmin = 0, vmax = 6, origin = 'lower', interpolation = 'none')
+
+        fig.savefig(dir_satmaps + file[:-4] + ".webp", 
                     pad_inches = 0, 
                     bbox_inches= 'tight',
                     dpi = 1,
