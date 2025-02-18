@@ -38,7 +38,8 @@ yregion = [275,775]
 # xregion = [250,750]
 # yregion = [350,750]
 
-savedir = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2014//"
+savedir = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2011//"
+# savedir = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2014//"
 
 ##############################################
 ##############################################

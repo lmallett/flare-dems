@@ -43,13 +43,19 @@ pathresp = "aia_resp_110809.sav"
 
 path = "D:\\emcubes_110809\\emcubes\\"
 # path = "D:\\emcubes_no_335_110809\\emcubes_no_335\\"
-xregion = [350,650]
-yregion = [275,775]
+# xregion = [350,650]
+# yregion = [275,775]
+xregion = [410,601]
+yregion = [410,611]
 
-# path = "D:\\emcubes_140910\\emcubes\\"
+pathresp = "aia_resp_140910.sav"
+path = "D:\\emcubes_140910\\emcubes\\"
 # path = "D:\\emcubes_140910\\emcubes_no_335\\"
-# xregion = [250,750]
-# yregion = [350,750]   
+xregion = [250,750]
+yregion = [360,600]   
+
+xregion = [375,575]
+yregion = [400,480]
 
 # Set what image you want to start at
 image_index = 45
@@ -70,13 +76,6 @@ yend    = yregion[1]-1
 # load in response functions as 20x1 arrays
 respinfo = sp.io.readsav(pathresp, python_dict = True, verbose = False)
 
-# logte= (((respinfo['r'])['A94'])[0])['logte'][0]
-# r94  = (((respinfo['r'])['A94'])[0])['tresp'][0]
-# r131 = (((respinfo['r'])['A131'])[0])['tresp'][0]
-# r171 = (((respinfo['r'])['A171'])[0])['tresp'][0]
-# r193 = (((respinfo['r'])['A193'])[0])['tresp'][0]
-# r211 = (((respinfo['r'])['A211'])[0])['tresp'][0]
-# r335 = (((respinfo['r'])['A335'])[0])['tresp'][0]
 logte= (respinfo["aia_tresp"][0])[0]
 r94  = (respinfo["aia_tresp"][0])[2]
 r131 = (respinfo["aia_tresp"][0])[3]
@@ -126,14 +125,15 @@ patches =[mpatches.Patch(color = color_list[i], label = labels[i]) for i in rang
 ##############################################
 
 fig = plt.figure()
-fig.set_size_inches(12, 5.5)
-gs = gridspec.GridSpec(1, 2, wspace= 0.01)
+fig.set_size_inches(12, 4.5)
+gs = gridspec.GridSpec(1, 2, wspace= 0.1)
+plt.subplots_adjust(left = 0.05, right=0.85)
 
 ax0 = fig.add_subplot(gs[:, 0]) # locitplots
 ax1 = fig.add_subplot(gs[:, 1]) # image plot
 
 ax0.set(aspect = 0.2,
-        title = "Loci curves, data $y_i$ divided by response function $K_i$",
+        title = "Loci curves, $y_i / K_i$",
         xlabel = r"$\mathrm{log(T)}$",
         ylabel = "Emission Measure $[10^{26} \;\mathrm{cm}^{-5}]$",
         xlim = [5.6, 8.0],
@@ -191,10 +191,12 @@ def load_data(i):
     # Plot image
     ax1.clear()
     ax1.imshow(emcubesummed, origin = 'lower', cmap = 'binary_r', interpolation='none')
+    ax1.text(0, -0.2, f"{file[11:-4]}", fontsize = 'medium', transform=ax1.transAxes)
 
     # choose cmap = 'hsv' or other map to see how saturated certain areas are
     ax1.imshow(statusmasked, cmap = color_map, vmin = 0, vmax = 5, origin = 'lower', interpolation = 'none')
     ax1.imshow(satmasked, cmap = sat_color, origin = 'lower', interpolation = 'none')
+    ax1.set_title("Error Codes")
 
     ax1.legend(handles = patches,
                bbox_to_anchor=(1.05, 1),

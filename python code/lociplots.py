@@ -13,17 +13,15 @@ matplotlib.rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 matplotlib.rc('text', usetex=True)
 
 import matplotlib.pyplot as plt
+import idl_colorbars
 
 from astropy.time import Time
 from astropy.timeseries import TimeSeries
 from astropy import visualization
-
-import idl_colorbars
 import astropy.units as u
+
 import sunpy.visualization.colormaps.color_tables as aiacolormaps
-
 import sunkit_image.trace as trace
-
 import sunpy.io.special.genx
 
 ##############################################
@@ -33,26 +31,27 @@ import sunpy.io.special.genx
 ##############################################
 ##############################################
 
-# Path to response functions
-pathresp = "aia_resp_full.sav"
-
-path = "D:\\emcubes_110809\\emcubes\\"
-# path = "D:\\emcubes_no_335_110809\\emcubes_no_335\\"
+pathresp = "aia_resp_110809.sav"
+path = "D://emcubes_110809//emcubes//"
+# path = "D://emcubes_no_335_110809//emcubes_no_335//"
 xregion = [350,650]
 yregion = [275,775]
+savedir = "C://Users//Lucien//Documents//School//Research//2023 - DEM Inversion//movies//2011//"
 
-# path = "D:\\emcubes_140910\\emcubes\\"
-# path = "D:\\emcubes_140910\\emcubes_no_335\\"
+pathresp = "aia_resp_140910.sav"
+path = "D://emcubes_140910//emcubes_np//"
+# path = "D://emcubes_140910//emcubes_no_335//"
 # xregion = [250,750]
-# yregion = [350,750]
+# yregion = [350,600]
+xregion = [375,575]
+yregion = [400,480]
+savedir = "C://Users//Lucien//Documents//School//Research//2023 - DEM Inversion//movies//2014//"
 
-savedir = "C://Users//Lucien//Documents//School//Research - Thesis//movies//2014//"
-
-##############################################
-##############################################
+######################################################################
+######################################################################
 # Initialization
-##############################################
-##############################################
+######################################################################
+######################################################################
 
 xstart  = xregion[0]
 xend    = xregion[1]-1
@@ -62,13 +61,20 @@ yend    = yregion[1]-1
 # load in response functions as 20x1 arrays
 respinfo = sp.io.readsav(pathresp, python_dict = True, verbose = False)
 
-logte = (((respinfo['r'])['A94'])[0])['logte'][0]
-r94 = (((respinfo['r'])['A94'])[0])['tresp'][0]
-r131 = (((respinfo['r'])['A131'])[0])['tresp'][0]
-r171 = (((respinfo['r'])['A171'])[0])['tresp'][0]
-r193 = (((respinfo['r'])['A193'])[0])['tresp'][0]
-r211 = (((respinfo['r'])['A211'])[0])['tresp'][0]
-r335 = (((respinfo['r'])['A335'])[0])['tresp'][0]
+# logte = (((respinfo['r'])['A94'])[0])['logte'][0]
+# r94 = (((respinfo['r'])['A94'])[0])['tresp'][0]
+# r131 = (((respinfo['r'])['A131'])[0])['tresp'][0]
+# r171 = (((respinfo['r'])['A171'])[0])['tresp'][0]
+# r193 = (((respinfo['r'])['A193'])[0])['tresp'][0]
+# r211 = (((respinfo['r'])['A211'])[0])['tresp'][0]
+# r335 = (((respinfo['r'])['A335'])[0])['tresp'][0]
+logte= (respinfo["aia_tresp"][0])[0]
+r94  = (respinfo["aia_tresp"][0])[2]
+r131 = (respinfo["aia_tresp"][0])[3]
+r171 = (respinfo["aia_tresp"][0])[4]
+r193 = (respinfo["aia_tresp"][0])[5]
+r211 = (respinfo["aia_tresp"][0])[6]
+r335 = (respinfo["aia_tresp"][0])[7]
 
 allwaves  = [94,131,171,193,211,335]
 
@@ -97,7 +103,7 @@ def lociplots(x, y):
 
     linecolors = ['r','g','b', 'c', 'm', 'y']
     fig, axs = plt.subplots(1,2)
-    fig.set_size_inches(11, 5.5)
+    fig.set_size_inches(11, 4)
     fig.tight_layout()
     plt.subplots_adjust(left = 0.07)
 
@@ -107,18 +113,28 @@ def lociplots(x, y):
 
         # read in data & modify it
         file = filelist[i]
-        filename = path + file
 
         print(file)
 
-        vars = sp.io.readsav(filename)
+        if file[-4:] == ".sav":
+            vars = sp.io.readsav(path + file)
+            datacube = np.copy(vars.datacube[:,ystart:yend, xstart:xend])
+            # satmap = np.copy(np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis=0))
+            # satmasked = np.ma.masked_where(satmap < 1, satmap) # makes transparent satmap for overplotting
+            emcube = np.copy(vars.emcube[:,ystart:yend, xstart:xend])
+            sel_ind = np.searchsorted(logte, vars.logt)
 
-        datacube = np.copy(vars.datacube[:,ystart:yend, xstart:xend])
-        # satmap = np.copy(np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis=0))
-        # satmasked = np.ma.masked_where(satmap < 1, satmap) # makes transparent satmap for overplotting
-        emcube = np.copy(vars.emcube[:,ystart:yend, xstart:xend])
+        if file[-4:] == ".npz":
+            vars = np.load(path + file)
+            datacube = (vars["datacube"])[:,ystart:yend, xstart:xend]
+            emcube = (vars["emcube"])[:,ystart:yend, xstart:xend]
+            # satmap = np.sum((vars["satmap"])[:, ystart:yend, xstart:xend], axis=0)
+            # statuscube = (vars["statuscube"])[ystart:yend, xstart:xend]
+            # statuscube = np.ma.masked_where(
+            #     satmap != 0, statuscube
+            # )  # exclude pixels that were saturated
+            sel_ind = np.searchsorted(logte, vars["logt"])
 
-        sel_ind = np.searchsorted(logte, vars.logt)
         logt = logte[sel_ind]
 
         print(emcube.shape)
@@ -167,7 +183,8 @@ def lociplots(x, y):
         # plt.style.use("dark_background")
         # plt.savefig(fname = savedir + "lociplots_144-214//" + file[:-4] + ".png")#, transparent = True)
         # plt.savefig(fname = savedir + "lociplots_153-214//" + file[:-4] + ".png")#, transparent = True)
-        plt.savefig(fname = savedir + "lociplots_280-140//" + file[:-4] + ".png")#, transparent = True)
+        # plt.savefig(fname = savedir + "lociplots_260-75//" + file[:-4] + ".png")#, transparent = True)
+        plt.savefig(fname = savedir + "lociplots_125-25//" + file[:-4] + ".png", dpi = 300)#, transparent = True)
 
         # fig.show()
 
@@ -176,6 +193,50 @@ def lociplots(x, y):
 ######################################################################
 ######################################################################
 ######################################################################
+
+
+def imgs_only(x, y):
+    """Produces images saved in savedir/(specify by editing code) of the solar image at pixel x, y in the image, one for each timestep.
+    Arguments:
+        x -- x pixel specified.
+        y -- y pixel specified.
+    """
+
+    global sel_ind
+    fig, axs = plt.subplots()
+    fig.set_size_inches(6, 3)
+    plt.tight_layout()
+    plt.subplots_adjust(left = 0.05,
+                        right = 0.95,
+                        bottom = 0.05,
+                        top = 0.95)
+
+    for i in range(len(filelist)):
+
+        axs.clear()
+
+        # read in data & modify it
+        file = filelist[i]
+
+        print(file)
+
+        if file[-4:] == ".sav":
+            vars = sp.io.readsav(path + file)
+            emcube = np.copy(vars.emcube[:,ystart:yend, xstart:xend])
+            sel_ind = np.searchsorted(logte, vars.logt)
+
+        if file[-4:] == ".npz":
+            vars = np.load(path + file)
+            emcube = (vars["emcube"])[:,ystart:yend, xstart:xend]
+            sel_ind = np.searchsorted(logte, vars["logt"])
+
+        # show image with line on pixel
+        axs.imshow(np.sum(emcube, axis = 0)**0.25, origin = 'lower', cmap = 'binary_r')
+        axs.axhline(y, color="r", linestyle="--")
+        axs.axvline(x, color="r", linestyle="--")
+        axs.axis('off')
+        
+        plt.savefig(fname = savedir + "lociplots_125-25_imgonly//" + file[:-4] + ".png", dpi = 300)#, bbox_inches="tight")
 
 def lociplots_only(x, y):
     """Produces images saved in savedir/(specify by editing code) of the lociplots at pixel x, y in the image, one for each timestep.
@@ -191,9 +252,9 @@ def lociplots_only(x, y):
 
     linecolors = ['r','g','b', 'c', 'm', 'y']
     fig, axs = plt.subplots()
-    fig.set_size_inches(11, 5.5)
+    fig.set_size_inches(6, 3)
     fig.tight_layout()
-    plt.subplots_adjust(left = 0.07)
+    plt.subplots_adjust(left = 0.1)
 
     for i in range(len(filelist)):
 
@@ -201,17 +262,25 @@ def lociplots_only(x, y):
 
         # read in data & modify it
         file = filelist[i]
-        filename = path + file
-
         print(file)
+        if file[-4:] == ".sav":
+            vars = sp.io.readsav(path + file)
+            datacube = np.copy(vars.datacube[:,ystart:yend, xstart:xend])
+            emcube = np.copy(vars.emcube[:,ystart:yend, xstart:xend])
+            # satmap = np.copy(np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis=0))
+            sel_ind = np.searchsorted(logte, vars.logt)
 
-        vars = sp.io.readsav(filename)
+        if file[-4:] == ".npz":
+            vars = np.load(path + file)
+            datacube = (vars["datacube"])[:,ystart:yend, xstart:xend]
+            emcube = (vars["emcube"])[:,ystart:yend, xstart:xend]
+            satmap = np.sum((vars["satmap"])[:, ystart:yend, xstart:xend], axis=0)
+            # statuscube = (vars["statuscube"])[ystart:yend, xstart:xend]
+            # statuscube = np.ma.masked_where(
+            #     satmap != 0, statuscube
+            # )  # exclude pixels that were saturated
+            sel_ind = np.searchsorted(logte, vars["logt"])
 
-        datacube = np.copy(vars.datacube[:,ystart:yend, xstart:xend])
-        satmap = np.copy(np.sum(vars.satmap[:,ystart:yend, xstart:xend], axis=0))
-        emcube = np.copy(vars.emcube[:,ystart:yend, xstart:xend])
-
-        sel_ind = np.searchsorted(logte, vars.logt)
         logt = logte[sel_ind]
 
         # IDL is col-major, so the data is unfortunately stored as [temp, y, x]
@@ -230,7 +299,7 @@ def lociplots_only(x, y):
         axs.set_yscale("log")
         axs.set_aspect(0.2)
         axs.set_xticks(np.arange(5.6, 8.0, 0.2))
-        axs.set(title = f"num. saturated channels: {int(satmap[y,x])}")
+        # axs.set(title = f"num. saturated channels: {int(satmap[y,x])}")
 
         for j in range(6):
 
@@ -246,11 +315,11 @@ def lociplots_only(x, y):
             axs.semilogy(logt, datarray2, color = linecolors[j], label = "${0} {1}$".format(allwaves[j], "\mathrm{\AA}"))
 
         # plot
-        axs.legend(fontsize = 20, loc = 'upper left')
+        axs.legend(loc = 'upper left')
         plt.pause(0.001)        
         # plt.savefig(fname = savedir + "lociplots_only_144-214//" + file[:-4] + ".png")#, transparent = True)
         # plt.savefig(fname = savedir + "lociplots_only_153-214//" + file[:-4] + ".png")#, transparent = True)
-        plt.savefig(fname = savedir + "lociplots_only_280_140//" + file[:-4] + ".png")#, transparent = True)
+        plt.savefig(fname = savedir + "lociplots_only_125-25//" + file[:-4] + ".png", dpi = 300)#, transparent = True)
 
 
 ######################################################################

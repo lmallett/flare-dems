@@ -35,19 +35,16 @@ except:
 ##############################################
 ##############################################
 
-# Path to response functions
 pathresp = "aia_resp_110809.sav"
-
 path = "D:\\emcubes_110809\\emcubes\\"
 # path = "D:\\emcubes_no_335_110809\\emcubes_no_335\\"
 xregion = [400,600]
 yregion = [400,600]
 
-# path = "D:\\emcubes_140910\\emcubes\\"
-# xregion = [400,600]
-# yregion = [400,600]
-# xregion = [250,750]
-# yregion = [350,750]  
+pathresp = "aia_resp_140910.sav"
+path = "D:\\emcubes_140910\\emcubes\\"
+xregion = [250,750]
+yregion = [350,600]  
 
 # Set what image you want to start at
 image_index = 45
