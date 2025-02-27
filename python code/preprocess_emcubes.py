@@ -11,10 +11,10 @@ import numpy as np
 # path = "D://emcubes_110809//emcubes_mchannel//m335//"
 # savdir = "D://emcubes_110809//emcubes_mchannel//m335_np//"
 
-# path = "D://emcubes_140910//emcubes//"
-# savdir = "D://emcubes_140910//emcubes_np//"
-path = "D://emcubes_140910//emcubes_no_335//"
-savdir = "D://emcubes_140910//emcubes_no_335_np//"
+path = "D://emcubes_140910//emcubes//"
+savdir = "D://emcubes_140910//emcubes_np//"
+# path = "D://emcubes_140910//emcubes_no_335//"
+# savdir = "D://emcubes_140910//emcubes_no_335_np//"
 
 filelist = os.listdir(path)
 
